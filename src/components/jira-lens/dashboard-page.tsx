@@ -4,7 +4,7 @@ import { DashboardTabs } from '@/components/jira-lens/dashboard-tabs';
 import { type JiraIssue, type JiraCredentials } from '@/lib/types';
 import { PanelLeft, Rocket, LogOut, BarChart3, Settings, LayoutDashboard, GanttChart, TestTube2, Briefcase, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { JiraFilterSidebar } from './jira-filter-sidebar';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
