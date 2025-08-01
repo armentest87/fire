@@ -11,10 +11,10 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <div className="flex h-screen bg-secondary">
-      <aside className="w-[350px] flex-shrink-0 border-r bg-background flex flex-col">
-        <div className="p-4 border-b">
-            <h1 className="text-2xl font-bold font-headline text-primary">Jira Lens 📊</h1>
+    <div className="flex h-screen bg-background">
+      <aside className="w-[350px] flex-shrink-0 border-r bg-card flex flex-col">
+        <div className="p-6 border-b">
+            <h1 className="text-2xl font-bold text-primary-dark">Jira Lens 📊</h1>
             <p className="text-sm text-muted-foreground">Dynamic Insights Dashboard</p>
         </div>
         <div className="overflow-y-auto flex-1">
@@ -28,6 +28,7 @@ export default function Home() {
         </div>
       </aside>
       <main className="flex-1 p-6 overflow-auto">
+        {isLoading && <div className="fixed inset-0 bg-background/50 z-50 flex items-center justify-center"><p>Loading data...</p></div>}
         <DashboardTabs issues={issues} jql={jql} isLoading={isLoading} error={error} />
       </main>
     </div>

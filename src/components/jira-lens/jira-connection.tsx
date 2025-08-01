@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +33,8 @@ export function JiraConnection({ jql, setJql, setIssues, setIsLoading, setError 
         toast({
           title: "Success!",
           description: `Successfully fetched ${data.length} issues.`,
-          className: 'bg-green-100 dark:bg-green-900',
+          variant: 'default',
+          className: 'bg-green-100 dark:bg-green-900 border-green-500',
         });
       } else {
         setIssues([]);
@@ -58,9 +59,9 @@ export function JiraConnection({ jql, setJql, setIssues, setIsLoading, setError 
   };
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="space-y-2">
-        <h3 className="font-semibold text-foreground">Jira Connection</h3>
+    <div className="p-6 space-y-6">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Jira Connection</h3>
         <div className="space-y-4">
           <div>
             <Label htmlFor="jira-url">Jira URL</Label>
@@ -77,19 +78,19 @@ export function JiraConnection({ jql, setJql, setIssues, setIsLoading, setError 
         </div>
       </div>
       <div className="space-y-2">
-        <h3 className="font-semibold text-foreground">Data Filtering</h3>
+        <h3 className="text-lg font-semibold text-foreground">Data Filtering</h3>
         <div>
           <Label htmlFor="jql-query">JQL Query</Label>
           <Textarea 
             id="jql-query"
             value={jql}
             onChange={(e) => setJql(e.target.value)}
-            className="min-h-[100px] font-code text-sm"
+            className="min-h-[120px] font-mono text-sm"
             placeholder="e.g., project = 'PROJ' and status = 'Done'"
           />
         </div>
       </div>
-      <Button onClick={handleFetch} disabled={localIsLoading} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+      <Button onClick={handleFetch} disabled={localIsLoading} className="w-full" size="lg">
         {localIsLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (

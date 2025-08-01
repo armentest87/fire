@@ -5,7 +5,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
 import { useMemo } from "react";
 
-const COLORS = ['#90CAF9', '#FFB74D', '#81C784', '#E57373', '#BA68C8', '#FFD54F', '#4DD0E1', '#F06292'];
+const COLORS = ['#2563EB', '#0D9488', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 interface OverviewProps {
   issues: JiraIssue[];
@@ -43,47 +43,41 @@ export function Overview({ issues }: OverviewProps) {
     };
   }, [issues]);
 
-  const barChartConfig = {
-    count: {
-      label: 'Count',
-      color: 'hsl(var(--primary))',
-    },
-  } satisfies ChartConfig;
+  const barChartConfig: ChartConfig = {
+    value: { label: 'Issues', color: 'hsl(var(--chart-1))' },
+  };
+  
+  const statusChartConfig: ChartConfig = statusDist.reduce((acc, cur, i) => {
+    acc[cur.name] = { label: cur.name, color: COLORS[i % COLORS.length] };
+    return acc;
+  }, {} as ChartConfig);
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Issues</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalIssues}</div>
-          </CardContent>
+            <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Issues</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-3xl font-bold">{stats.totalIssues}</p>
+            </CardContent>
         </Card>
+        <div className="metric-card bg-blue-50 border-l-4 border-blue-500">
+            <h3 className="text-blue-800">Completed Issues</h3>
+            <p className="text-3xl font-bold text-blue-900">{stats.doneIssues}</p>
+        </div>
+        <div className="metric-card bg-green-50 border-l-4 border-green-500">
+            <h3 className="text-green-800">Completion Rate</h3>
+            <p className="text-3xl font-bold text-green-900">{stats.completionRate.toFixed(1)}%</p>
+        </div>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Issues</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.doneIssues}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completionRate.toFixed(1)}%</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Resolution (Days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.avgResolutionTime > 0 ? stats.avgResolutionTime.toFixed(1) : 'N/A'}</div>
-          </CardContent>
+            <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Resolution (Days)</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-3xl font-bold">{stats.avgResolutionTime > 0 ? stats.avgResolutionTime.toFixed(1) : 'N/A'}</p>
+            </CardContent>
         </Card>
       </div>
 
@@ -93,7 +87,7 @@ export function Overview({ issues }: OverviewProps) {
             <CardTitle>Issues by Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={{}} className="min-h-[300px] w-full">
+            <ChartContainer config={statusChartConfig} className="min-h-[300px] w-full">
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <RechartsTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
@@ -101,7 +95,7 @@ export function Overview({ issues }: OverviewProps) {
                       const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                       const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
                       const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-                      return (percent > 0.05) ? <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+                      return (percent > 0.05) ? <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="font-semibold">
                           {`${(percent * 100).toFixed(0)}%`}
                         </text> : null;
                     }}>
@@ -127,7 +121,7 @@ export function Overview({ issues }: OverviewProps) {
                   <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
                   <YAxis tickLine={false} axisLine={false} />
                   <RechartsTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                  <Bar dataKey="value" name="count" fill="var(--color-count)" radius={4} />
+                  <Bar dataKey="value" name="Issues" fill="var(--color-value)" radius={8} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
