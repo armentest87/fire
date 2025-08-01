@@ -16,31 +16,10 @@ interface DashboardTabsProps {
   error: string | null;
 }
 
-const Placeholder = ({ title, message }: { title: string; message: string }) => (
-  <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg bg-card text-center p-4">
-    <h3 className="text-xl font-semibold mb-2">{title}</h3>
-    <p className="text-muted-foreground">{message}</p>
-  </div>
-);
-
 export function DashboardTabs({ issues, jql, isLoading, error }: DashboardTabsProps) {
-  
-  if (isLoading) {
-    return <Skeleton className="h-[600px] w-full" />;
-  }
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <Terminal className="h-4 w-4" />
-        <AlertTitle>Error Fetching Data</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
   if (!issues || issues.length === 0) {
-      return <Placeholder title="No Data to Display" message="Your query returned no issues. Try a different JQL query." />;
+    return null; 
   }
-
 
   return (
     <Tabs defaultValue="overview" className="w-full animate-fade-in">

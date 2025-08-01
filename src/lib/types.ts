@@ -28,3 +28,10 @@ export interface JiraIssue {
     }[];
   };
 }
+
+
+export interface JiraCredentials {
+    url: string;
+    email: string;
+    token: string;
+}
