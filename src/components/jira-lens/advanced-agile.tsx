@@ -25,7 +25,7 @@ interface AdvancedAgileProps {
 }
 
 export function AdvancedAgile({ issues }: AdvancedAgileProps) {
-  const { stats, weeklyThroughput, leadTimeData, cycleTimeData } = useMemo(() => {
+  const { stats, weeklyThroughput } = useMemo(() => {
     const doneIssues = issues.filter(i => i.status_category === 'Done' && i.resolved);
     const inProgressIssues = issues.filter(i => i.status_category === 'In Progress');
 
@@ -65,8 +65,6 @@ export function AdvancedAgile({ issues }: AdvancedAgileProps) {
           fill: true
         }]
       },
-      leadTimeData, // You would need a box plot component for this
-      cycleTimeData, // You would need a box plot component for this
     };
   }, [issues]);
 
