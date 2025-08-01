@@ -24,27 +24,23 @@ const Placeholder = ({ title, message }: { title: string; message: string }) => 
 );
 
 export function DashboardTabs({ issues, jql, isLoading, error }: DashboardTabsProps) {
-  const renderContent = (Component: React.ElementType, tabName: string, props = {}) => {
-    if (isLoading) {
-      return <Skeleton className="h-[600px] w-full" />;
-    }
-    if (error) {
-      return (
-        <Alert variant="destructive">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Error Fetching Data</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      );
-    }
-    if (!issues) {
-      return <Placeholder title={`Welcome to the ${tabName} Tab`} message="Please fetch issue data in the sidebar to see the dashboard." />;
-    }
-    if (issues.length === 0) {
+  
+  if (isLoading) {
+    return <Skeleton className="h-[600px] w-full" />;
+  }
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <Terminal className="h-4 w-4" />
+        <AlertTitle>Error Fetching Data</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+  if (!issues || issues.length === 0) {
       return <Placeholder title="No Data to Display" message="Your query returned no issues. Try a different JQL query." />;
-    }
-    return <Component issues={issues} {...props} />;
-  };
+  }
+
 
   return (
     <Tabs defaultValue="overview" className="w-full animate-fade-in">
@@ -54,10 +50,10 @@ export function DashboardTabs({ issues, jql, isLoading, error }: DashboardTabsPr
         <TabsTrigger value="sprint">Sprint Analysis</TabsTrigger>
         <TabsTrigger value="custom">Custom Analysis</TabsTrigger>
       </TabsList>
-      <TabsContent value="overview" className="mt-4">{renderContent(Overview, 'Overview')}</TabsContent>
-      <TabsContent value="cfd" className="mt-4">{renderContent(CfdChart, 'Cumulative Flow')}</TabsContent>
-      <TabsContent value="sprint" className="mt-4">{renderContent(SprintAnalysis, 'Sprint Analysis')}</TabsContent>
-      <TabsContent value="custom" className="mt-4">{renderContent(CustomAnalysisBuilder, 'Custom Analysis')}</TabsContent>
+      <TabsContent value="overview" className="mt-4"><Overview issues={issues} /></TabsContent>
+      <TabsContent value="cfd" className="mt-4"><CfdChart issues={issues} /></TabsContent>
+      <TabsContent value="sprint" className="mt-4"><SprintAnalysis issues={issues} /></TabsContent>
+      <TabsContent value="custom" className="mt-4"><CustomAnalysisBuilder issues={issues} /></TabsContent>
     </Tabs>
   );
 }

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { JiraConnection } from '@/components/jira-lens/jira-connection';
 import { DashboardTabs } from '@/components/jira-lens/dashboard-tabs';
 import { type JiraIssue } from '@/lib/types';
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 
@@ -31,6 +31,16 @@ export default function Home() {
     </>
   );
 
+  const WelcomePlaceholder = () => (
+    <div className="flex flex-col items-center justify-center h-full text-center">
+      <Rocket className="w-16 h-16 mb-4 text-primary" />
+      <h2 className="text-2xl font-bold mb-2">Welcome to Jira Lens</h2>
+      <p className="text-muted-foreground">
+        Connect to your Jira instance and enter a JQL query in the sidebar to start analyzing your project data.
+      </p>
+    </div>
+  );
+
   return (
     <div className="flex h-screen bg-background">
       <aside className="w-[350px] flex-shrink-0 border-r bg-card flex-col hidden lg:flex">
@@ -46,9 +56,9 @@ export default function Home() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-[350px]">
-                <SheetHeader className="sr-only">
-                  <SheetTitle>Sidebar</SheetTitle>
-                  <SheetDescription>Main navigation and connection settings.</SheetDescription>
+                <SheetHeader>
+                  <SheetTitle className="sr-only">Sidebar</SheetTitle>
+                  <SheetDescription className="sr-only">Main navigation and connection settings.</SheetDescription>
                 </SheetHeader>
                  <aside className="w-full h-full bg-card flex flex-col">
                    {sidebarContent}
@@ -59,11 +69,25 @@ export default function Home() {
         </header>
 
         {isLoading && (
-          <div className="fixed inset-0 bg-background/50 z-50 flex items-center justify-center">
+          <div className="flex items-center justify-center h-full">
             <p>Loading data...</p>
           </div>
         )}
-        <DashboardTabs issues={issues} jql={jql} isLoading={isLoading} error={error} />
+
+        {!isLoading && issues && issues.length > 0 && (
+           <DashboardTabs issues={issues} jql={jql} isLoading={isLoading} error={error} />
+        )}
+        
+        {!isLoading && (!issues || issues.length === 0) && !error && <WelcomePlaceholder />}
+
+        {error && !isLoading && (
+           <div className="flex items-center justify-center h-full text-center text-red-500">
+             <div>
+               <h2 className="text-2xl font-bold mb-2">An Error Occurred</h2>
+               <p>{error}</p>
+             </div>
+           </div>
+        )}
       </main>
     </div>
   );
