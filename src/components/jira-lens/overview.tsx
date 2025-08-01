@@ -14,7 +14,7 @@ import {
 } from 'chart.js';
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { ArrowUp, ArrowDown, Users, CheckCircle, Clock, FileText } from "lucide-react";
+import { ArrowUp, ArrowDown, Users, CheckCircle, Clock, FileText, Loader, ListTodo } from "lucide-react";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -29,6 +29,8 @@ export function Overview({ issues }: OverviewProps) {
   const { stats, statusDist, typeDist } = useMemo(() => {
     const totalIssues = issues.length;
     const doneIssues = issues.filter(i => i.status_category === 'Done').length;
+    const inProgressIssues = issues.filter(i => i.status_category === 'In Progress').length;
+    const toDoIssues = issues.filter(i => i.status_category === 'To Do').length;
     const completionRate = totalIssues > 0 ? (doneIssues / totalIssues) * 100 : 0;
     const resolvedIssues = issues.filter(i => i.resolved);
     const avgResolutionTime = resolvedIssues.length > 0 
@@ -52,6 +54,8 @@ export function Overview({ issues }: OverviewProps) {
       stats: {
         totalIssues,
         doneIssues,
+        inProgressIssues,
+        toDoIssues,
         completionRate,
         avgResolutionTime,
       },
@@ -160,11 +164,13 @@ export function Overview({ issues }: OverviewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard icon={FileText} iconBg="bg-pink-500" title="Total Issues" value={`${stats.totalIssues}`} delta="+12%" deltaColor="text-green-600" />
-        <MetricCard icon={Users} iconBg="bg-blue-500" title="Completed Issues" value={`${stats.doneIssues}`} delta="+8%" deltaColor="text-green-600"/>
-        <MetricCard icon={CheckCircle} iconBg="bg-green-500" title="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} delta="+5%" deltaColor="text-green-600" />
-        <MetricCard icon={Clock} iconBg="bg-orange-500" title="Avg. Resolution" value={`${stats.avgResolutionTime > 0 ? stats.avgResolutionTime.toFixed(1) : 'N/A'}d`} delta="-2d" deltaColor="text-red-600"/>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <MetricCard icon={FileText} iconBg="bg-pink-500" title="Total Issues" value={`${stats.totalIssues}`} />
+        <MetricCard icon={CheckCircle} iconBg="bg-green-500" title="Completed Issues" value={`${stats.doneIssues}`} />
+        <MetricCard icon={Loader} iconBg="bg-yellow-500" title="In Progress Issues" value={`${stats.inProgressIssues}`} />
+        <MetricCard icon={ListTodo} iconBg="bg-blue-500" title="To Do Issues" value={`${stats.toDoIssues}`} />
+        <MetricCard icon={Users} iconBg="bg-indigo-500" title="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} />
+        <MetricCard icon={Clock} iconBg="bg-orange-500" title="Avg. Resolution" value={`${stats.avgResolutionTime > 0 ? stats.avgResolutionTime.toFixed(1) : 'N/A'}d`} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
