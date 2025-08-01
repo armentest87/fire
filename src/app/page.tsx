@@ -5,7 +5,7 @@ import { DashboardTabs } from '@/components/jira-lens/dashboard-tabs';
 import { type JiraIssue } from '@/lib/types';
 import { PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 
 export default function Home() {
   const [issues, setIssues] = useState<JiraIssue[] | null>(null);
@@ -46,6 +46,10 @@ export default function Home() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-[350px]">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Sidebar</SheetTitle>
+                  <SheetDescription>Main navigation and connection settings.</SheetDescription>
+                </SheetHeader>
                  <aside className="w-full h-full bg-card flex flex-col">
                    {sidebarContent}
                  </aside>
