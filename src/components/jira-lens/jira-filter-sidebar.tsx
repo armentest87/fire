@@ -165,7 +165,7 @@ export function JiraFilterSidebar({ credentials, jql, setJql, setIssues, setIsLo
                 />
             </TabsContent>
         </Tabs>
-      <Button onClick={handleFetch} disabled={localIsLloading} className="w-full" size="lg">
+      <Button onClick={handleFetch} disabled={localIsLoading} className="w-full" size="lg">
         {localIsLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
