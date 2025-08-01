@@ -1,182 +1,114 @@
-
 'use client';
-import { useState, useMemo } from 'react';
-import { DashboardTabs } from '@/components/jira-lens/dashboard-tabs';
+
+import { useState } from 'react';
 import { type JiraIssue, type JiraCredentials } from '@/lib/types';
-import { PanelLeft, Rocket, LogOut, BarChart3, Settings, LayoutDashboard, GanttChart, TestTube2, Briefcase, SlidersHorizontal, ShieldCheck, LineChart, Banknote, GitMerge, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
-import { JiraFilterSidebar } from './jira-filter-sidebar';
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { fetchJiraData } from '@/lib/dummy-data';
+import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Info, LogOut, Loader2 } from 'lucide-react';
+import { KpiCards } from './kpi-cards';
+import { ProjectProgressChart } from './project-progress-chart';
+import { IssuesByStatusChart } from './issues-by-status-chart';
+import { IssuesByTypeChart } from './issues-by-type-chart';
+import { IssuesByPriorityChart } from './issues-by-priority-chart';
+import { UserWorkloadReport } from './user-workload-report';
+import { OpenIssuesReport } from './open-issues-report';
+
 
 interface DashboardPageProps {
   credentials: JiraCredentials;
   onLogout: () => void;
 }
 
+const WelcomePlaceholder = () => (
+    <div className="text-center p-8 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold mb-2">Welcome to your Jira Project Dashboard</h2>
+      <p className="text-gray-500">Please select a project from the dropdown above to see the data.</p>
+    </div>
+);
+
 export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [issues, setIssues] = useState<JiraIssue[] | null>(null);
-  const [jql, setJql] = useState<string>("statusCategory = 'In Progress' ORDER BY created DESC");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(true);
+  const [selectedProject, setSelectedProject] = useState<string>('');
+  const { toast } = useToast();
 
-  const navItems = useMemo(() => [
-    { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'sprint', label: 'Sprint Analysis', icon: Rocket },
-    { id: 'advanced-agile', label: 'Advanced Agile', icon: LineChart },
-    { id: 'cfd', label: 'Cumulative Flow', icon: GanttChart },
-    { id: 'custom', label: 'Custom Analysis', icon: TestTube2 },
-    { id: 'itsm', label: 'ITSM & Quality', icon: ShieldCheck },
-    { id: 'financial', label: 'Financial Report', icon: Banknote },
-    { id: 'release', label: 'Release Analysis', icon: GitMerge },
-    { id: 'raw-data', label: 'Raw Data', icon: Database },
-    { id: 'settings', label: 'Settings', icon: Settings },
-  ], []);
-
-  const sidebarNav = (
-    <>
-      <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
-        <h2 className="px-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Analytics</h2>
-        {navItems.slice(0, 9).map(item => (
-            <TooltipProvider key={item.id} delayDuration={0}>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Button
-                            variant={activeTab === item.id ? 'secondary' : 'ghost'}
-                            className="w-full justify-start text-base h-11"
-                            onClick={() => setActiveTab(item.id)}
-                            >
-                            <item.icon className="h-5 w-5 mr-3" />
-                            {item.label}
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" align="center">{item.label}</TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-        ))}
-         <h2 className="px-2 pt-4 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Configuration</h2>
-         {navItems.slice(9).map(item => (
-            <TooltipProvider key={item.id} delayDuration={0}>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Button
-                            variant={activeTab === item.id ? 'secondary' : 'ghost'}
-                            className="w-full justify-start text-base h-11"
-                            onClick={() => setActiveTab(item.id)}
-                            disabled
-                            >
-                            <item.icon className="h-5 w-5 mr-3" />
-                            {item.label}
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" align="center">{item.label}</TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-        ))}
-
-      </nav>
-      <div className="p-4 border-t mt-auto">
-        <Button variant="outline" className="w-full" onClick={onLogout}>
-            <LogOut className="h-4 w-4 mr-2" /> Logout
-        </Button>
-      </div>
-    </>
-  );
-
-  const WelcomePlaceholder = () => (
-    <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-card rounded-2xl border shadow-sm">
-      <div className="p-4 bg-primary/10 rounded-full mb-4">
-        <Rocket className="w-12 h-12 text-primary" />
-      </div>
-      <h2 className="text-3xl font-bold mb-2 text-gradient">Welcome to Jira Lens</h2>
-      <p className="text-muted-foreground max-w-md">
-        Use the filters in the sidebar to fetch and analyze your project data. Start by selecting a project and date range, or use a custom JQL query.
-      </p>
-    </div>
-  );
+  const handleProjectChange = async (projectKey: string) => {
+    setSelectedProject(projectKey);
+    setIsLoading(true);
+    setIssues(null);
+    try {
+      // In a real app, you'd use the projectKey to form a JQL query
+      const jql = `project = "${projectKey}" ORDER BY created DESC`;
+      const data = await fetchJiraData(jql);
+      setIssues(data);
+      toast({
+        title: "Success!",
+        description: `Successfully fetched ${data.length} issues for project ${projectKey}.`,
+      });
+    } catch (error) {
+       toast({
+        title: "Error fetching data",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="flex h-screen bg-background text-foreground font-sans">
-      <aside className="w-72 flex-shrink-0 border-r bg-card flex-col hidden lg:flex">
-         <div className="p-4 border-b text-left">
-            <h2 className="text-lg font-semibold">Jira Lens</h2>
-            <p className="text-sm text-muted-foreground">AI-Powered Analytics</p>
-         </div>
-         {sidebarNav}
-      </aside>
-
-      <div className="flex flex-1">
-        <aside className={cn(
-          "flex-shrink-0 border-r bg-card/80 backdrop-blur-sm p-6 flex flex-col transition-all duration-300 ease-in-out",
-          isFilterSidebarOpen ? "w-[400px]" : "w-0 p-0 border-none overflow-hidden"
-        )}>
-            <JiraFilterSidebar 
-              credentials={credentials}
-              jql={jql}
-              setJql={setJql}
-              setIssues={setIssues}
-              setIsLoading={setIsLoading}
-              setError={setError}
-              isLoading={isLoading}
-            />
-        </aside>
-        <main className="flex-1 p-6 overflow-auto relative">
-             <div className="absolute top-0 right-0 h-64 w-full bg-gradient-to-bl from-primary/5 to-accent/5 -z-10 blur-3xl" />
-            <header className="flex items-center gap-4 mb-6">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="lg:hidden">
-                      <PanelLeft className="h-5 w-5" />
-                      <span className="sr-only">Toggle Sidebar</span>
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-72 bg-card flex flex-col">
-                     <SheetHeader className="p-4 border-b text-left">
-                        <SheetTitle>Jira Lens</SheetTitle>
-                        <SheetDescription>AI-Powered Analytics</SheetDescription>
-                      </SheetHeader>
-                     {sidebarNav}
-                  </SheetContent>
-                </Sheet>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-                  <p className="text-muted-foreground">Your dynamic insights dashboard for Jira.</p>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">Jira Project Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <Select onValueChange={handleProjectChange} value={selectedProject}>
+            <SelectTrigger className="w-[200px] bg-white">
+              <SelectValue placeholder="Choose Project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PROJ">Project Phoenix</SelectItem>
+              <SelectItem value="DATA">Data Platform</SelectItem>
+              <SelectItem value="ITSAM">ITSM Sample</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="ghost" size="icon" onClick={onLogout}>
+            <LogOut className="h-5 w-5 text-gray-600" />
+            <span className="sr-only">Logout</span>
+          </Button>
+        </div>
+      </header>
+      
+      <main>
+        {isLoading && (
+            <div className="flex items-center justify-center h-96">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-4 text-lg text-gray-600">Loading project data...</p>
+            </div>
+        )}
+        {!isLoading && !issues && <WelcomePlaceholder />}
+        
+        {issues && (
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-1"><KpiCards issues={issues} /></div>
+                    <div className="md:col-span-2"><ProjectProgressChart issues={issues} /></div>
                 </div>
-                <Button 
-                    variant="outline" 
-                    onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
-                    className="ml-auto"
-                >
-                    <SlidersHorizontal className="h-4 w-4 mr-2"/>
-                    Filters
-                </Button>
-            </header>
 
-            {isLoading && (
-              <div className="flex items-center justify-center h-full">
-                <p>Loading data...</p>
-              </div>
-            )}
-
-            {issues && issues.length > 0 ? (
-              <DashboardTabs issues={issues} jql={jql} isLoading={isLoading} error={error} activeTab={activeTab} setActiveTab={setActiveTab}/>
-            ) : !isLoading && !error ? (
-                 <WelcomePlaceholder />
-            ) : null}
-
-            {error && !isLoading && (
-              <div className="flex items-center justify-center h-full text-center text-red-500">
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">An Error Occurred</h2>
-                  <p>{error}</p>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <IssuesByStatusChart issues={issues} />
+                    <IssuesByTypeChart issues={issues} />
+                    <IssuesByPriorityChart issues={issues} />
                 </div>
-              </div>
-            )}
-        </main>
-      </div>
+                
+                 <div className="grid grid-cols-1 gap-6">
+                    <UserWorkloadReport issues={issues} />
+                    <OpenIssuesReport issues={issues} />
+                </div>
+            </div>
+        )}
+      </main>
     </div>
   );
 }

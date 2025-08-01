@@ -27,7 +27,6 @@ export interface JiraIssue {
       }[];
     }[];
   };
-  // New fields for advanced analytics
   lead_time_days?: number | null;
   cycle_time_days?: number | null;
   sla_met?: boolean | null;
