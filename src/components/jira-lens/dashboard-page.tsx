@@ -3,18 +3,13 @@
 import { useState } from 'react';
 import { type JiraIssue, type JiraCredentials } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { fetchJiraData } from '@/lib/dummy-data';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Info, LogOut, Loader2 } from 'lucide-react';
-import { KpiCards } from './kpi-cards';
-import { ProjectProgressChart } from './project-progress-chart';
-import { IssuesByStatusChart } from './issues-by-status-chart';
-import { IssuesByTypeChart } from './issues-by-type-chart';
-import { IssuesByPriorityChart } from './issues-by-priority-chart';
-import { UserWorkloadReport } from './user-workload-report';
-import { OpenIssuesReport } from './open-issues-report';
-
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import { LogOut, PanelLeft, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { JiraFilterSidebar } from './jira-filter-sidebar';
+import { fetchJiraData } from '@/lib/dummy-data';
+import { DashboardTabs } from './dashboard-tabs';
 
 interface DashboardPageProps {
   credentials: JiraCredentials;
@@ -22,30 +17,37 @@ interface DashboardPageProps {
 }
 
 const WelcomePlaceholder = () => (
-    <div className="text-center p-8 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-2">Welcome to your Jira Project Dashboard</h2>
-      <p className="text-gray-500">Please select a project from the dropdown above to see the data.</p>
+    <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+      <h2 className="text-2xl font-semibold mb-2 text-gray-800 dark:text-gray-100">Welcome to Jira Lens</h2>
+      <p className="text-gray-500 dark:text-gray-400">Use the filters in the sidebar to fetch your project data and begin your analysis.</p>
     </div>
 );
 
 export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [issues, setIssues] = useState<JiraIssue[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<string>('');
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleProjectChange = async (projectKey: string) => {
-    setSelectedProject(projectKey);
+  const handleFetch = async (jql: string) => {
+    if (!jql) {
+        toast({
+            title: "JQL query is empty",
+            description: "Please provide a JQL query to fetch data.",
+            variant: "destructive",
+        });
+        return;
+    }
     setIsLoading(true);
     setIssues(null);
+    if(isMobileSidebarOpen) setMobileSidebarOpen(false);
     try {
-      // In a real app, you'd use the projectKey to form a JQL query
-      const jql = `project = "${projectKey}" ORDER BY created DESC`;
       const data = await fetchJiraData(jql);
       setIssues(data);
       toast({
         title: "Success!",
-        description: `Successfully fetched ${data.length} issues for project ${projectKey}.`,
+        description: `Successfully fetched ${data.length} issues.`,
       });
     } catch (error) {
        toast({
@@ -57,57 +59,80 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       setIsLoading(false);
     }
   };
+  
+  const sidebarContent = (
+      <JiraFilterSidebar
+          onFetch={handleFetch}
+          isLoading={isLoading}
+          onLogout={onLogout}
+      />
+  );
+
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-800">Jira Project Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <Select onValueChange={handleProjectChange} value={selectedProject}>
-            <SelectTrigger className="w-[200px] bg-white">
-              <SelectValue placeholder="Choose Project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="PROJ">Project Phoenix</SelectItem>
-              <SelectItem value="DATA">Data Platform</SelectItem>
-              <SelectItem value="ITSAM">ITSM Sample</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="icon" onClick={onLogout}>
-            <LogOut className="h-5 w-5 text-gray-600" />
-            <span className="sr-only">Logout</span>
-          </Button>
-        </div>
-      </header>
-      
-      <main>
-        {isLoading && (
-            <div className="flex items-center justify-center h-96">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-lg text-gray-600">Loading project data...</p>
+    <div className="flex min-h-screen">
+       <aside className={cn(
+           "hidden lg:block bg-white dark:bg-gray-800/50 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out",
+           isSidebarOpen ? 'w-80' : 'w-0'
+       )}>
+          <div className="p-4 flex flex-col h-full">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Filters</h2>
+               <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
             </div>
-        )}
-        {!isLoading && !issues && <WelcomePlaceholder />}
-        
-        {issues && (
-            <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-1"><KpiCards issues={issues} /></div>
-                    <div className="md:col-span-2"><ProjectProgressChart issues={issues} /></div>
-                </div>
+            {sidebarContent}
+          </div>
+       </aside>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <IssuesByStatusChart issues={issues} />
-                    <IssuesByTypeChart issues={issues} />
-                    <IssuesByPriorityChart issues={issues} />
+      <main className="flex-1 p-6 bg-gray-50/50 dark:bg-gray-900/50">
+        <header className="flex items-center gap-4 mb-6">
+            <Sheet open={isMobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="lg:hidden">
+                  <PanelLeft className="h-5 w-5" />
+                  <span className="sr-only">Toggle Sidebar</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80 p-4 bg-white dark:bg-gray-900">
+                  <SheetHeader>
+                      <SheetTitle>Filters</SheetTitle>
+                      <SheetDescription>
+                          Use the filters below to fetch and analyze your Jira data.
+                      </SheetDescription>
+                  </SheetHeader>
+                  {sidebarContent}
+              </SheetContent>
+            </Sheet>
+
+          {!isSidebarOpen && (
+            <Button variant="outline" onClick={() => setSidebarOpen(true)}>
+              <PanelLeft className="h-5 w-5 mr-2" />
+              Filters
+            </Button>
+          )}
+
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            Jira Lens
+          </h1>
+          <div className="ml-auto">
+             <Button variant="ghost" onClick={onLogout}>
+              <LogOut className="mr-2 h-5 w-5" />
+              Logout
+            </Button>
+          </div>
+        </header>
+
+        <div className="h-[calc(100vh-8rem)] overflow-y-auto">
+            {!issues && !isLoading && <WelcomePlaceholder />}
+            {isLoading && (
+                 <div className="flex items-center justify-center h-full">
+                    <p className="text-lg text-gray-600 dark:text-gray-300">Loading project data...</p>
                 </div>
-                
-                 <div className="grid grid-cols-1 gap-6">
-                    <UserWorkloadReport issues={issues} />
-                    <OpenIssuesReport issues={issues} />
-                </div>
-            </div>
-        )}
+            )}
+            {issues && <DashboardTabs issues={issues} />}
+        </div>
       </main>
     </div>
   );

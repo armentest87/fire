@@ -2,57 +2,69 @@
 import { type JiraIssue } from "@/lib/types";
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info, CheckCircle2 } from "lucide-react";
+import { Info, CheckCircle, Clock, ListTodo } from "lucide-react";
+import { differenceInDays, parseISO } from 'date-fns';
+
 
 interface KpiCardsProps {
   issues: JiraIssue[];
 }
 
 export function KpiCards({ issues }: KpiCardsProps) {
-  const { totalIssues, doneIssues, donePercentage } = useMemo(() => {
+  const kpis = useMemo(() => {
     const total = issues.length;
-    const done = issues.filter(i => i.status_category === 'Done').length;
-    const percentage = total > 0 ? (done / total) * 100 : 0;
+    const doneIssues = issues.filter(i => i.status_category === 'Done');
+    const inProgressIssues = issues.filter(i => i.status_category === 'In Progress');
+    const todoIssues = issues.filter(i => i.status_category === 'To Do');
+
+    const doneCount = doneIssues.length;
+    const completionRate = total > 0 ? (doneCount / total) * 100 : 0;
+    
+    const resolvedIssues = doneIssues.filter(i => i.resolved);
+    const totalResolutionDays = resolvedIssues.reduce((acc, i) => {
+        return acc + differenceInDays(parseISO(i.resolved!), parseISO(i.created));
+    }, 0);
+    const avgResolutionTime = resolvedIssues.length > 0 ? totalResolutionDays / resolvedIssues.length : 0;
+
     return {
       totalIssues: total,
-      doneIssues: done,
-      donePercentage: percentage.toFixed(2),
+      doneCount,
+      inProgressCount: inProgressIssues.length,
+      todoCount: todoIssues.length,
+      completionRate: completionRate.toFixed(1),
+      avgResolutionTime: avgResolutionTime.toFixed(1)
     };
   }, [issues]);
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Issues</CardTitle>
-          <Info className="h-4 w-4 text-gray-400" />
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold">{totalIssues}</p>
-          <p className="text-xs text-gray-500">Number of Issues</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Done Issues</CardTitle>
-          <Info className="h-4 w-4 text-gray-400" />
-        </CardHeader>
-        <CardContent className="flex items-center gap-4">
-            <div className="relative h-16 w-16">
-                 <svg className="h-full w-full" width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="18" cy="18" r="16" fill="none" className="stroke-current text-gray-200" strokeWidth="2"></circle>
-                    <circle cx="18" cy="18" r="16" fill="none" className="stroke-current text-green-500" strokeWidth="2" strokeDasharray={`${donePercentage}, 100`} strokeDashoffset="25" transform="rotate(-90 18 18)"></circle>
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-700">{donePercentage}%</span>
-                </div>
-            </div>
-            <div>
-                 <p className="text-4xl font-bold">{doneIssues}</p>
-                 <p className="text-xs text-gray-500">Number of Issues</p>
-            </div>
-        </CardContent>
-      </Card>
-    </div>
+     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <KpiCard title="Total Issues" value={kpis.totalIssues} icon={<ListTodo />} />
+        <KpiCard title="Completed" value={kpis.doneCount} icon={<CheckCircle />} />
+        <KpiCard title="In Progress" value={kpis.inProgressCount} icon={<Clock />} />
+        <KpiCard title="To Do" value={kpis.todoCount} icon={<ListTodo />} />
+        <KpiCard title="Completion Rate" value={`${kpis.completionRate}%`} />
+        <KpiCard title="Avg. Resolution" value={`${kpis.avgResolutionTime} days`} />
+     </div>
   );
 }
+
+
+interface KpiCardProps {
+    title: string;
+    value: string | number;
+    icon?: React.ReactNode;
+}
+
+const KpiCard = ({ title, value, icon }: KpiCardProps) => (
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className="flex items-center gap-4">
+                {icon && <div className="text-primary">{icon}</div>}
+                <p className="text-2xl font-bold">{value}</p>
+            </div>
+        </CardContent>
+    </Card>
+)
