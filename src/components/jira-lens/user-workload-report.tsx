@@ -1,4 +1,5 @@
 'use client';
+import React from "react";
 import { type JiraIssue } from "@/lib/types";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
