@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { DashboardTabs } from '@/components/jira-lens/dashboard-tabs';
 import { type JiraIssue, type JiraCredentials } from '@/lib/types';
-import { PanelLeft, Rocket, LogOut, BarChart3, Settings, LayoutDashboard, GanttChart, TestTube2, Briefcase, SlidersHorizontal } from 'lucide-react';
+import { PanelLeft, Rocket, LogOut, BarChart3, Settings, LayoutDashboard, GanttChart, TestTube2, Briefcase, SlidersHorizontal, ShieldCheck, LineChart, Banknote, GitMerge, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { JiraFilterSidebar } from './jira-filter-sidebar';
@@ -25,18 +25,22 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
   const navItems = useMemo(() => [
     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'cfd', label: 'Cumulative Flow', icon: GanttChart },
     { id: 'sprint', label: 'Sprint Analysis', icon: Rocket },
+    { id: 'advanced-agile', label: 'Advanced Agile', icon: LineChart },
+    { id: 'cfd', label: 'Cumulative Flow', icon: GanttChart },
     { id: 'custom', label: 'Custom Analysis', icon: TestTube2 },
-    { id: 'other', label: 'Other Reports', icon: BarChart3 },
+    { id: 'itsm', label: 'ITSM & Quality', icon: ShieldCheck },
+    { id: 'financial', label: 'Financial Report', icon: Banknote },
+    { id: 'release', label: 'Release Analysis', icon: GitMerge },
+    { id: 'raw-data', label: 'Raw Data', icon: Database },
     { id: 'settings', label: 'Settings', icon: Settings },
   ], []);
 
   const sidebarNav = (
     <>
-       <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
         <h2 className="px-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Analytics</h2>
-        {navItems.slice(0, 4).map(item => (
+        {navItems.slice(0, 9).map(item => (
             <TooltipProvider key={item.id} delayDuration={0}>
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -54,7 +58,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             </TooltipProvider>
         ))}
          <h2 className="px-2 pt-4 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Configuration</h2>
-         {navItems.slice(4).map(item => (
+         {navItems.slice(9).map(item => (
             <TooltipProvider key={item.id} delayDuration={0}>
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -157,11 +161,11 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               </div>
             )}
 
-            {issues && issues.length > 0 && (
+            {issues && issues.length > 0 ? (
               <DashboardTabs issues={issues} jql={jql} isLoading={isLoading} error={error} activeTab={activeTab} setActiveTab={setActiveTab}/>
-            )}
-            
-            {!isLoading && (!issues || issues.length === 0) && !error && <WelcomePlaceholder />}
+            ) : !isLoading && !error ? (
+                 <WelcomePlaceholder />
+            ) : null}
 
             {error && !isLoading && (
               <div className="flex items-center justify-center h-full text-center text-red-500">

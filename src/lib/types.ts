@@ -27,6 +27,15 @@ export interface JiraIssue {
       }[];
     }[];
   };
+  // New fields for advanced analytics
+  lead_time_days?: number | null;
+  cycle_time_days?: number | null;
+  sla_met?: boolean | null;
+  budget?: number | null;
+  actual_cost?: number | null;
+  revenue?: number | null;
+  other_expenses?: number | null;
+  labor_cost?: number | null;
 }
 
 
