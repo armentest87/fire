@@ -33,10 +33,10 @@ interface CfdChartProps {
 }
 
 const STATUS_ORDER: ('To Do' | 'In Progress' | 'Done')[] = ['To Do', 'In Progress', 'Done'];
-const STATUS_COLORS: Record<string, string> = {
-    'To Do': 'hsl(38, 92%, 50%)', // warning-orange
-    'In Progress': 'hsl(221, 83%, 53%)', // primary-blue
-    'Done': 'hsl(142, 69%, 41%)', // success-green
+const STATUS_COLORS: Record<string, { border: string; background: string; }> = {
+    'To Do':       { border: 'rgba(100, 255, 218, 1)', background: 'rgba(100, 255, 218, 0.5)' }, // Mint
+    'In Progress': { border: 'rgba(167, 139, 250, 1)', background: 'rgba(167, 139, 250, 0.5)' }, // Lavender
+    'Done':        { border: 'rgba(96, 165, 250, 1)', background: 'rgba(96, 165, 250, 0.5)' }, // Soft Blue
 };
 
 export function CfdChart({ issues }: CfdChartProps) {
@@ -47,7 +47,6 @@ export function CfdChart({ issues }: CfdChartProps) {
     let allChanges: { date: Date; key: string; status_category: 'To Do' | 'In Progress' | 'Done' }[] = [];
     
     issues.forEach(issue => {
-      // Start with the creation date as the first 'To Do' status
       allChanges.push({
         date: startOfDay(new Date(issue.created)),
         key: issue.key,
@@ -79,36 +78,25 @@ export function CfdChart({ issues }: CfdChartProps) {
     
     const dateRange = eachDayOfInterval({ start: minDate, end: maxDate });
 
-    const dailySnapshots: Record<string, Record<string, 'To Do' | 'In Progress' | 'Done'>> = {};
+    const dailySnapshots: Record<string, Record<string, number>> = {};
 
-    for (const issue of issues) {
-      const issueChanges = allChanges.filter(c => c.key === issue.key);
-      if(issueChanges.length === 0) continue;
-
-      let currentStatus = issueChanges[0].status_category;
-      let changeIndex = 0;
-      
-      for(const day of dateRange) {
+    for (const day of dateRange) {
         const dayStr = format(day, 'yyyy-MM-dd');
-        if (!dailySnapshots[dayStr]) dailySnapshots[dayStr] = {};
+        if (!dailySnapshots[dayStr]) dailySnapshots[dayStr] = { 'To Do': 0, 'In Progress': 0, 'Done': 0 };
 
-        // Find the status of the issue at the end of 'day'
-        let statusForDay = 'To Do';
-        for(const change of issueChanges) {
-          if(change.date <= day) {
-            statusForDay = change.status_category;
-          } else {
-            break;
-          }
-        }
-        
-        if (new Date(issue.created) <= day) {
-            if(!dailySnapshots[dayStr][statusForDay]) {
-                dailySnapshots[dayStr][statusForDay] = 0;
+        for(const issue of issues) {
+            if (startOfDay(new Date(issue.created)) > day) continue;
+
+            let statusForDay: 'To Do' | 'In Progress' | 'Done' = 'To Do';
+            for(const change of allChanges.filter(c => c.key === issue.key)) {
+                if(change.date <= day) {
+                    statusForDay = change.status_category;
+                } else {
+                    break;
+                }
             }
             dailySnapshots[dayStr][statusForDay]++;
         }
-      }
     }
 
 
@@ -132,10 +120,17 @@ export function CfdChart({ issues }: CfdChartProps) {
         return {
             label: status,
             data: dataByStatus[status],
-            borderColor: STATUS_COLORS[status],
-            backgroundColor: `${STATUS_COLORS[status]}B3`, // 70% opacity
+            borderColor: STATUS_COLORS[status].border,
+            backgroundColor: STATUS_COLORS[status].background,
             fill: true,
-            tension: 0.3
+            tension: 0.4,
+            pointBackgroundColor: STATUS_COLORS[status].border,
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: STATUS_COLORS[status].border,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            pointBorderWidth: 2,
         };
     });
 
@@ -183,6 +178,9 @@ export function CfdChart({ issues }: CfdChartProps) {
       y: {
         stacked: true,
         beginAtZero: true,
+        grid: {
+            color: 'rgba(0,0,0,0.05)'
+        },
         ticks: {
              font: {
                 family: 'Inter, sans-serif'
