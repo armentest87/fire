@@ -25,7 +25,7 @@ const Placeholder = ({ title, message }: { title: string; message: string }) => 
 );
 
 export function DashboardTabs({ issues, jql, isLoading, error }: DashboardTabsProps) {
-  const renderContent = (Component: React.ElementType, tabName: string) => {
+  const renderContent = (Component: React.ElementType, tabName: string, props = {}) => {
     if (isLoading) {
       return <Skeleton className="h-[600px] w-full" />;
     }
@@ -44,7 +44,7 @@ export function DashboardTabs({ issues, jql, isLoading, error }: DashboardTabsPr
     if (issues.length === 0) {
       return <Placeholder title="No Data to Display" message="Your query returned no issues. Try a different JQL query." />;
     }
-    return <Component issues={issues} />;
+    return <Component issues={issues} {...props} />;
   };
 
   return (

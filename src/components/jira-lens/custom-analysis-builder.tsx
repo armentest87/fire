@@ -1,8 +1,17 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
+import { Bar, Pie } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -10,18 +19,30 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+
 interface CustomAnalysisBuilderProps {
   issues: JiraIssue[];
 }
 
-const COLORS = ['#90CAF9', '#FFB74D', '#81C784', '#E57373', '#BA68C8', '#FFD54F', '#4DD0E1', '#F06292'];
+const CHART_COLORS = ['#2563EB', '#0D9488', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#6B7280'];
 
 export function CustomAnalysisBuilder({ issues }: CustomAnalysisBuilderProps) {
   const [groupBy, setGroupBy] = useState<string>('assignee');
   const [calculation, setCalculation] = useState<'count' | 'sum' | 'avg'>('count');
   const [numericField, setNumericField] = useState<string>('story_points');
   const [chartType, setChartType] = useState<'bar' | 'pie'>('bar');
-  const [analysisResult, setAnalysisResult] = useState<any[] | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<{ labels: string[], data: number[] } | null>(null);
+  const [tableData, setTableData] = useState<{name: string, value: number}[] | null>(null);
 
   const { categoricalCols, numericalCols } = useMemo(() => {
     const cat: (keyof JiraIssue)[] = ['issuetype', 'status', 'status_category', 'priority', 'reporter', 'assignee', 'components', 'labels', 'fix_versions', 'sprint_names'];
@@ -33,8 +54,10 @@ export function CustomAnalysisBuilder({ issues }: CustomAnalysisBuilderProps) {
     let df = issues.flatMap(issue => {
       const groupValue = (issue as any)[groupBy];
       if (Array.isArray(groupValue)) {
+        if(groupValue.length === 0) return [{ ...issue, [groupBy]: 'None' }];
         return groupValue.map(val => ({ ...issue, [groupBy]: val }));
       }
+       if(!groupValue) return { ...issue, [groupBy]: 'Unassigned' };
       return { ...issue };
     });
     
@@ -64,12 +87,42 @@ export function CustomAnalysisBuilder({ issues }: CustomAnalysisBuilderProps) {
       return { name, value };
     });
 
-    setAnalysisResult(result.sort((a,b) => b.value-a.value));
+    const sortedResult = result.sort((a,b) => b.value-a.value);
+    setTableData(sortedResult);
+    setAnalysisResult({
+        labels: sortedResult.map(item => item.name),
+        data: sortedResult.map(item => item.value)
+    });
   };
   
-  const chartConfig: ChartConfig = {
-    value: { label: 'Value', color: 'hsl(var(--primary))' },
+  const chartData = {
+    labels: analysisResult?.labels || [],
+    datasets: [
+      {
+        label: `${calculation} of ${calculation === 'count' ? 'issues' : numericField}`,
+        data: analysisResult?.data || [],
+        backgroundColor: chartType === 'pie' 
+          ? analysisResult?.labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length])
+          : CHART_COLORS[0],
+        borderColor: '#ffffff',
+        borderWidth: 1,
+      },
+    ],
   };
+
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true } },
+  };
+
+  const pieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'right' as const } },
+  };
+
 
   return (
     <div className="space-y-6">
@@ -99,7 +152,7 @@ export function CustomAnalysisBuilder({ issues }: CustomAnalysisBuilderProps) {
         </CardContent>
       </Card>
       
-      {analysisResult && (
+      {analysisResult && tableData && (
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -111,32 +164,19 @@ export function CustomAnalysisBuilder({ issues }: CustomAnalysisBuilderProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[400px] w-full">
-              <ResponsiveContainer>
-                {chartType === 'bar' ? (
-                  <BarChart data={analysisResult}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} />
-                    <RechartsTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                    <Bar dataKey="value" fill="var(--color-value)" radius={4} />
-                  </BarChart>
-                ) : (
-                  <PieChart>
-                    <RechartsTooltip content={<ChartTooltipContent nameKey="name" />} />
-                    <Pie data={analysisResult} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
-                      {analysisResult.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                    </Pie>
-                  </PieChart>
-                )}
-              </ResponsiveContainer>
-            </ChartContainer>
+            <div className="h-[400px] w-full">
+              {chartType === 'bar' ? (
+                <Bar data={chartData} options={barOptions} />
+              ) : (
+                <Pie data={chartData} options={pieOptions} />
+              )}
+            </div>
             <h3 className="font-semibold mt-6 mb-2">Chart Data</h3>
             <div className="max-h-60 overflow-y-auto border rounded-md">
                 <Table>
                     <TableHeader><TableRow><TableHead>Category</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
                     <TableBody>
-                        {analysisResult.map(row => <TableRow key={row.name}><TableCell>{row.name}</TableCell><TableCell className="text-right">{row.value.toFixed(2)}</TableCell></TableRow>)}
+                        {tableData.map(row => <TableRow key={row.name}><TableCell>{row.name}</TableCell><TableCell className="text-right">{row.value.toFixed(2)}</TableCell></TableRow>)}
                     </TableBody>
                 </Table>
             </div>

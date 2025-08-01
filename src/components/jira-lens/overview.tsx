@@ -1,11 +1,23 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
+import { Pie, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title
+} from 'chart.js';
 import { useMemo } from "react";
 
-const COLORS = ['#2563EB', '#0D9488', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
+
+
+const CHART_COLORS = ['#2563EB', '#0D9488', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 interface OverviewProps {
   issues: JiraIssue[];
@@ -31,6 +43,9 @@ export function Overview({ issues }: OverviewProps) {
       return acc;
     }, {} as Record<string, number>);
 
+    const sortedStatus = Object.entries(statusCounts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
+    const sortedTypes = Object.entries(typeCounts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
+
     return {
       stats: {
         totalIssues,
@@ -38,19 +53,51 @@ export function Overview({ issues }: OverviewProps) {
         completionRate,
         avgResolutionTime,
       },
-      statusDist: Object.entries(statusCounts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value),
-      typeDist: Object.entries(typeCounts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value),
+      statusDist: {
+        labels: sortedStatus.map(s => s.name),
+        datasets: [{
+          label: 'Issues by Status',
+          data: sortedStatus.map(s => s.value),
+          backgroundColor: sortedStatus.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
+          borderColor: '#ffffff',
+          borderWidth: 1,
+        }]
+      },
+      typeDist: {
+        labels: sortedTypes.map(t => t.name),
+        datasets: [{
+          label: 'Issues by Type',
+          data: sortedTypes.map(t => t.value),
+          backgroundColor: CHART_COLORS[0],
+        }]
+      },
     };
   }, [issues]);
 
-  const barChartConfig: ChartConfig = {
-    value: { label: 'Issues', color: 'hsl(var(--chart-1))' },
+  const pieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+      },
+    },
   };
-  
-  const statusChartConfig: ChartConfig = statusDist.reduce((acc, cur, i) => {
-    acc[cur.name] = { label: cur.name, color: COLORS[i % COLORS.length] };
-    return acc;
-  }, {} as ChartConfig);
+
+  const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
 
   return (
     <div className="space-y-6">
@@ -63,11 +110,11 @@ export function Overview({ issues }: OverviewProps) {
                 <p className="text-3xl font-bold">{stats.totalIssues}</p>
             </CardContent>
         </Card>
-        <div className="metric-card bg-blue-50 border-l-4 border-blue-500">
+        <div className="metric-card bg-blue-50 border-l-4 border-primary">
             <h3 className="text-blue-800">Completed Issues</h3>
             <p className="text-3xl font-bold text-blue-900">{stats.doneIssues}</p>
         </div>
-        <div className="metric-card bg-green-50 border-l-4 border-green-500">
+        <div className="metric-card bg-green-50 border-l-4 border-success-green">
             <h3 className="text-green-800">Completion Rate</h3>
             <p className="text-3xl font-bold text-green-900">{stats.completionRate.toFixed(1)}%</p>
         </div>
@@ -86,26 +133,8 @@ export function Overview({ issues }: OverviewProps) {
           <CardHeader>
             <CardTitle>Issues by Status</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={statusChartConfig} className="min-h-[300px] w-full">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <RechartsTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                  <Pie data={statusDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                      const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-                      const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-                      return (percent > 0.05) ? <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="font-semibold">
-                          {`${(percent * 100).toFixed(0)}%`}
-                        </text> : null;
-                    }}>
-                    {statusDist.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+          <CardContent className="h-[300px]">
+            <Pie data={statusDist} options={pieOptions} />
           </CardContent>
         </Card>
 
@@ -113,18 +142,8 @@ export function Overview({ issues }: OverviewProps) {
           <CardHeader>
             <CardTitle>Issues by Type</CardTitle>
           </CardHeader>
-          <CardContent>
-             <ChartContainer config={barChartConfig} className="min-h-[300px] w-full">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={typeDist} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} />
-                  <YAxis tickLine={false} axisLine={false} />
-                  <RechartsTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                  <Bar dataKey="value" name="Issues" fill="var(--color-value)" radius={8} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+          <CardContent className="h-[300px]">
+             <Bar data={typeDist} options={barOptions} />
           </CardContent>
         </Card>
       </div>

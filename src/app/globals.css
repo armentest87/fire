@@ -4,31 +4,26 @@
 
 @layer base {
   :root {
-    --background: 220 17% 97%;
+    --background: 220 17% 98%; /* #F9FAFB */
     --foreground: 224 7% 15%;
     --card: 0 0% 100%;
     --card-foreground: 224 7% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 7% 15%;
-    --primary: 224 82% 57%;
+    --primary: 224 82% 57%; /* #2563EB */
     --primary-foreground: 210 20% 98%;
     --secondary: 220 13% 91%;
     --secondary-foreground: 222 47% 11%;
     --muted: 220 13% 91%;
     --muted-foreground: 215 6% 50%;
-    --accent: 38 92% 53%;
-    --accent-foreground: 30 90% 10%;
+    --accent: 173 80% 36%; /* #0D9488 */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 224 82% 57%;
     --radius: 0.75rem;
-    --chart-1: 224 82% 57%;
-    --chart-2: 173 80% 36%;
-    --chart-3: 38 92% 53%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 262 70% 66%;
   }
 
   .dark {
@@ -44,18 +39,13 @@
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    --accent: 38 92% 53%;
-    --accent-foreground: 30 90% 98%;
+    --accent: 173 80% 46%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 210 82% 77%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
   }
 }
 
@@ -74,7 +64,7 @@
     @apply rounded-lg border p-4;
   }
   .metric-card h3 {
-    @apply text-sm font-medium text-muted-foreground;
+    @apply text-sm font-medium;
   }
   .metric-card p {
     @apply text-2xl font-bold;
