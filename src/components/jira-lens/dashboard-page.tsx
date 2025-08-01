@@ -2,11 +2,12 @@
 import { useState, useMemo } from 'react';
 import { DashboardTabs } from '@/components/jira-lens/dashboard-tabs';
 import { type JiraIssue, type JiraCredentials } from '@/lib/types';
-import { PanelLeft, Rocket, LogOut, BarChart3, Settings, Search, LayoutDashboard, GanttChart, ListFilter, TestTube2, Briefcase } from 'lucide-react';
+import { PanelLeft, Rocket, LogOut, BarChart3, Settings, LayoutDashboard, GanttChart, TestTube2, Briefcase, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { JiraFilterSidebar } from './jira-filter-sidebar';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface DashboardPageProps {
   credentials: JiraCredentials;
@@ -19,6 +20,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(true);
 
   const navItems = useMemo(() => [
     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,15 +33,10 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b flex items-center gap-3">
-         <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent text-white">
-            <Briefcase className="h-6 w-6" />
-         </div>
-         <div>
-            <h1 className="text-lg font-bold">Jira Lens</h1>
-            <p className="text-xs text-muted-foreground">AI-Powered Analytics</p>
-         </div>
-      </div>
+      <SheetHeader className="p-4 border-b text-left">
+          <SheetTitle>Jira Lens</SheetTitle>
+          <SheetDescription>AI-Powered Analytics</SheetDescription>
+        </SheetHeader>
       <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
         <h2 className="px-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Analytics</h2>
         {navItems.slice(0, 4).map(item => (
@@ -47,8 +44,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 <Tooltip>
                     <TooltipTrigger asChild>
                          <Button
-                            variant={activeTab === item.id ? 'default' : 'ghost'}
-                            className={`w-full justify-start text-base h-11 ${activeTab === item.id ? 'bg-gradient-to-r from-primary to-accent/80 text-white shadow-md' : ''}`}
+                            variant={activeTab === item.id ? 'secondary' : 'ghost'}
+                            className="w-full justify-start text-base h-11"
                             onClick={() => setActiveTab(item.id)}
                             >
                             <item.icon className="h-5 w-5 mr-3" />
@@ -65,7 +62,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 <Tooltip>
                     <TooltipTrigger asChild>
                          <Button
-                            variant={activeTab === item.id ? 'default' : 'ghost'}
+                            variant={activeTab === item.id ? 'secondary' : 'ghost'}
                             className="w-full justify-start text-base h-11"
                             onClick={() => setActiveTab(item.id)}
                             disabled
@@ -102,12 +99,15 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
   return (
     <div className="flex h-screen bg-background text-foreground font-sans">
-      <aside className="w-[280px] flex-shrink-0 border-r bg-card flex-col hidden lg:flex">
+      <aside className="w-72 flex-shrink-0 border-r bg-card flex-col hidden lg:flex">
         {sidebarContent}
       </aside>
 
       <div className="flex flex-1">
-        <div className="w-[400px] flex-shrink-0 border-r bg-card/50 p-6 flex flex-col">
+        <aside className={cn(
+          "flex-shrink-0 border-r bg-card/80 backdrop-blur-sm p-6 flex flex-col transition-all duration-300 ease-in-out",
+          isFilterSidebarOpen ? "w-[400px]" : "w-0 p-0 border-none overflow-hidden"
+        )}>
             <JiraFilterSidebar 
               credentials={credentials}
               jql={jql}
@@ -117,9 +117,9 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               setError={setError}
               isLoading={isLoading}
             />
-        </div>
+        </aside>
         <main className="flex-1 p-6 overflow-auto relative">
-             <div className="absolute top-0 right-0 h-64 w-full bg-gradient-to-bl from-primary/10 to-accent/10 -z-10 blur-3xl" />
+             <div className="absolute top-0 right-0 h-64 w-full bg-gradient-to-bl from-primary/5 to-accent/5 -z-10 blur-3xl" />
             <header className="flex items-center gap-4 mb-6">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -128,7 +128,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                       <span className="sr-only">Toggle Sidebar</span>
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-[280px] bg-card">
+                  <SheetContent side="left" className="p-0 w-72 bg-card">
                      {sidebarContent}
                   </SheetContent>
                 </Sheet>
@@ -136,6 +136,14 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                   <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
                   <p className="text-muted-foreground">Your dynamic insights dashboard for Jira.</p>
                 </div>
+                <Button 
+                    variant="outline" 
+                    onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
+                    className="ml-auto"
+                >
+                    <SlidersHorizontal className="h-4 w-4 mr-2"/>
+                    Filters
+                </Button>
             </header>
 
             {isLoading && (

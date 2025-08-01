@@ -85,8 +85,8 @@ export function JiraFilterSidebar({ credentials, jql, setJql, setIssues, setIsLo
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 space-y-6">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex-1 space-y-6 overflow-y-auto pr-2 -mr-2">
         <h2 className="text-xl font-bold">Filters</h2>
         <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -166,7 +166,7 @@ export function JiraFilterSidebar({ credentials, jql, setJql, setIssues, setIsLo
             </TabsContent>
         </Tabs>
       </div>
-      <div className="mt-auto">
+      <div className="mt-auto pt-4">
         <Button onClick={handleFetch} disabled={isLoading} className="w-full" size="lg">
           {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
