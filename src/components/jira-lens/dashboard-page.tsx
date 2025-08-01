@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useMemo } from 'react';
 import { DashboardTabs } from '@/components/jira-lens/dashboard-tabs';
@@ -31,13 +32,9 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     { id: 'settings', label: 'Settings', icon: Settings },
   ], []);
 
-  const sidebarContent = (
-    <div className="flex flex-col h-full">
-      <SheetHeader className="p-4 border-b text-left">
-          <SheetTitle>Jira Lens</SheetTitle>
-          <SheetDescription>AI-Powered Analytics</SheetDescription>
-        </SheetHeader>
-      <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+  const sidebarNav = (
+    <>
+       <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
         <h2 className="px-2 text-xs font-semibold text-muted-foreground tracking-wider uppercase">Analytics</h2>
         {navItems.slice(0, 4).map(item => (
             <TooltipProvider key={item.id} delayDuration={0}>
@@ -82,7 +79,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             <LogOut className="h-4 w-4 mr-2" /> Logout
         </Button>
       </div>
-    </div>
+    </>
   );
 
   const WelcomePlaceholder = () => (
@@ -100,7 +97,11 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   return (
     <div className="flex h-screen bg-background text-foreground font-sans">
       <aside className="w-72 flex-shrink-0 border-r bg-card flex-col hidden lg:flex">
-        {sidebarContent}
+         <div className="p-4 border-b text-left">
+            <h2 className="text-lg font-semibold">Jira Lens</h2>
+            <p className="text-sm text-muted-foreground">AI-Powered Analytics</p>
+         </div>
+         {sidebarNav}
       </aside>
 
       <div className="flex flex-1">
@@ -128,8 +129,12 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                       <span className="sr-only">Toggle Sidebar</span>
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-72 bg-card">
-                     {sidebarContent}
+                  <SheetContent side="left" className="p-0 w-72 bg-card flex flex-col">
+                     <SheetHeader className="p-4 border-b text-left">
+                        <SheetTitle>Jira Lens</SheetTitle>
+                        <SheetDescription>AI-Powered Analytics</SheetDescription>
+                      </SheetHeader>
+                     {sidebarNav}
                   </SheetContent>
                 </Sheet>
                 <div>
