@@ -13,11 +13,12 @@ import {
   Title
 } from 'chart.js';
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 
-const CHART_COLORS = ['#2563EB', '#0D9488', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+const CHART_COLORS = ["#2563EB", "#0D9488", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
 
 interface OverviewProps {
   issues: JiraIssue[];
@@ -59,8 +60,8 @@ export function Overview({ issues }: OverviewProps) {
           label: 'Issues by Status',
           data: sortedStatus.map(s => s.value),
           backgroundColor: sortedStatus.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
-          borderColor: '#ffffff',
-          borderWidth: 1,
+          borderColor: '#FFFFFF',
+          borderWidth: 2,
         }]
       },
       typeDist: {
@@ -69,25 +70,52 @@ export function Overview({ issues }: OverviewProps) {
           label: 'Issues by Type',
           data: sortedTypes.map(t => t.value),
           backgroundColor: CHART_COLORS[0],
+          borderRadius: 4,
         }]
       },
     };
   }, [issues]);
 
+  const commonOptions = {
+     responsive: true,
+     maintainAspectRatio: false,
+     plugins: {
+        legend: {
+            labels: {
+                font: {
+                    family: "Inter, sans-serif",
+                    size: 12
+                },
+                 color: "#6B7280"
+            }
+        },
+        tooltip: {
+            backgroundColor: "#FFFFFF",
+            titleColor: "#111827",
+            bodyColor: "#374151",
+            borderColor: "#E5E7EB",
+            borderWidth: 1,
+            titleFont: { family: "Inter, sans-serif", size: 13, weight: '600' },
+            bodyFont: { family: "Inter, sans-serif", size: 12 },
+        }
+     }
+  };
+
   const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
+    ...commonOptions,
     plugins: {
+        ...commonOptions.plugins,
       legend: {
+        ...commonOptions.plugins.legend,
         position: 'right' as const,
       },
     },
   };
 
   const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
+    ...commonOptions,
     plugins: {
+        ...commonOptions.plugins,
       legend: {
         display: false,
       },
@@ -95,35 +123,53 @@ export function Overview({ issues }: OverviewProps) {
     scales: {
       y: {
         beginAtZero: true,
+        grid: {
+            drawOnChartArea: false,
+        },
+        ticks: { color: "#6B7280", font: { family: "Inter, sans-serif" }}
       },
+      x: {
+        grid: {
+            display: false,
+        },
+        ticks: { color: "#6B7280", font: { family: "Inter, sans-serif" }}
+      }
     },
   };
 
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Issues</CardTitle>
+        <Card className="p-1.5">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium text-neutral-gray">Total Issues</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-3xl font-bold">{stats.totalIssues}</p>
+                <p className="text-2xl font-bold">{stats.totalIssues}</p>
             </CardContent>
         </Card>
-        <div className="metric-card bg-blue-50 border-l-4 border-primary">
-            <h3 className="text-blue-800">Completed Issues</h3>
-            <p className="text-3xl font-bold text-blue-900">{stats.doneIssues}</p>
-        </div>
-        <div className="metric-card bg-green-50 border-l-4 border-success-green">
-            <h3 className="text-green-800">Completion Rate</h3>
-            <p className="text-3xl font-bold text-green-900">{stats.completionRate.toFixed(1)}%</p>
-        </div>
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Resolution (Days)</CardTitle>
+         <Card className="p-1.5 bg-blue-50/50 border-l-4 border-primary-blue">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium text-primary-blue">Completed Issues</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-3xl font-bold">{stats.avgResolutionTime > 0 ? stats.avgResolutionTime.toFixed(1) : 'N/A'}</p>
+                <p className="text-2xl font-bold text-primary-blue">{stats.doneIssues}</p>
+            </CardContent>
+        </Card>
+         <Card className="p-1.5 bg-green-50/50 border-l-4 border-success-green">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium text-success-green">Completion Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold text-success-green">{stats.completionRate.toFixed(1)}%</p>
+            </CardContent>
+        </Card>
+        <Card className="p-1.5">
+            <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium text-neutral-gray">Avg. Resolution (Days)</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold">{stats.avgResolutionTime > 0 ? stats.avgResolutionTime.toFixed(1) : 'N/A'}</p>
             </CardContent>
         </Card>
       </div>
@@ -134,7 +180,7 @@ export function Overview({ issues }: OverviewProps) {
             <CardTitle>Issues by Status</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <Pie data={statusDist} options={pieOptions} />
+            <Pie data={statusDist} options={pieOptions as any} />
           </CardContent>
         </Card>
 
@@ -143,7 +189,7 @@ export function Overview({ issues }: OverviewProps) {
             <CardTitle>Issues by Type</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-             <Bar data={typeDist} options={barOptions} />
+             <Bar data={typeDist} options={barOptions as any} />
           </CardContent>
         </Card>
       </div>

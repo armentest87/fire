@@ -1,7 +1,7 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Area } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,9 +34,9 @@ interface CfdChartProps {
 
 const STATUS_ORDER: ('To Do' | 'In Progress' | 'Done')[] = ['To Do', 'In Progress', 'Done'];
 const STATUS_COLORS: Record<string, string> = {
-    'To Do': '#F59E0B',
-    'In Progress': '#2563EB',
-    'Done': '#10B981',
+    'To Do': 'hsl(38, 92%, 50%)', // warning-orange
+    'In Progress': 'hsl(221, 83%, 53%)', // primary-blue
+    'Done': 'hsl(142, 69%, 41%)', // success-green
 };
 
 export function CfdChart({ issues }: CfdChartProps) {
@@ -47,6 +47,13 @@ export function CfdChart({ issues }: CfdChartProps) {
     let allChanges: { date: Date; key: string; status_category: 'To Do' | 'In Progress' | 'Done' }[] = [];
     
     issues.forEach(issue => {
+      // Start with the creation date as the first 'To Do' status
+      allChanges.push({
+        date: startOfDay(new Date(issue.created)),
+        key: issue.key,
+        status_category: 'To Do',
+      });
+
       issue.changelog.histories.forEach(history => {
         history.items.forEach(item => {
           if (item.field === 'status') {
@@ -67,6 +74,9 @@ export function CfdChart({ issues }: CfdChartProps) {
 
     const minDate = allChanges[0].date;
     const maxDate = startOfDay(new Date());
+    
+    if (minDate > maxDate) return null;
+    
     const dateRange = eachDayOfInterval({ start: minDate, end: maxDate });
 
     const dailySnapshots: Record<string, Record<string, 'To Do' | 'In Progress' | 'Done'>> = {};
@@ -79,35 +89,51 @@ export function CfdChart({ issues }: CfdChartProps) {
       let changeIndex = 0;
       
       for(const day of dateRange) {
-        if (!dailySnapshots[issue.key]) dailySnapshots[issue.key] = {};
-        while(changeIndex < issueChanges.length - 1 && issueChanges[changeIndex + 1].date <= day) {
-          changeIndex++;
-          currentStatus = issueChanges[changeIndex].status_category;
+        const dayStr = format(day, 'yyyy-MM-dd');
+        if (!dailySnapshots[dayStr]) dailySnapshots[dayStr] = {};
+
+        // Find the status of the issue at the end of 'day'
+        let statusForDay = 'To Do';
+        for(const change of issueChanges) {
+          if(change.date <= day) {
+            statusForDay = change.status_category;
+          } else {
+            break;
+          }
         }
-        if (issueChanges[0].date <= day) {
-          dailySnapshots[issue.key][format(day, 'yyyy-MM-dd')] = currentStatus;
+        
+        if (new Date(issue.created) <= day) {
+            if(!dailySnapshots[dayStr][statusForDay]) {
+                dailySnapshots[dayStr][statusForDay] = 0;
+            }
+            dailySnapshots[dayStr][statusForDay]++;
         }
       }
     }
 
+
+    const dataByStatus: Record<string, number[]> = {
+        'To Do': [],
+        'In Progress': [],
+        'Done': [],
+    };
+
+    dateRange.forEach(day => {
+        const dayStr = format(day, 'yyyy-MM-dd');
+        const snapshot = dailySnapshots[dayStr] || {};
+        STATUS_ORDER.forEach(status => {
+            dataByStatus[status].push(snapshot[status] || 0);
+        })
+    });
+
+
     const labels = dateRange.map(day => format(day, 'MMM d'));
     const datasets = STATUS_ORDER.map(status => {
-        const data = dateRange.map(day => {
-            const dayStr = format(day, 'yyyy-MM-dd');
-            let count = 0;
-            Object.keys(dailySnapshots).forEach(key => {
-                if (dailySnapshots[key][dayStr] === status) {
-                    count++;
-                }
-            });
-            return count;
-        });
-
         return {
             label: status,
-            data: data,
+            data: dataByStatus[status],
             borderColor: STATUS_COLORS[status],
-            backgroundColor: `${STATUS_COLORS[status]}80`,
+            backgroundColor: `${STATUS_COLORS[status]}B3`, // 70% opacity
             fill: true,
             tension: 0.3
         };
@@ -125,6 +151,11 @@ export function CfdChart({ issues }: CfdChartProps) {
     plugins: {
       legend: {
         position: 'top' as const,
+        labels: {
+            font: {
+                family: 'Inter, sans-serif'
+            }
+        }
       },
       title: {
         display: false,
@@ -132,6 +163,9 @@ export function CfdChart({ issues }: CfdChartProps) {
       tooltip: {
         mode: 'index' as const,
         intersect: false,
+        font: {
+            family: 'Inter, sans-serif'
+        }
       },
     },
     scales: {
@@ -139,11 +173,21 @@ export function CfdChart({ issues }: CfdChartProps) {
         stacked: true,
         grid: {
             display: false,
+        },
+        ticks: {
+             font: {
+                family: 'Inter, sans-serif'
+            }
         }
       },
       y: {
         stacked: true,
-        beginAtZero: true
+        beginAtZero: true,
+        ticks: {
+             font: {
+                family: 'Inter, sans-serif'
+            }
+        }
       },
     },
   };
@@ -169,7 +213,7 @@ export function CfdChart({ issues }: CfdChartProps) {
         <CardDescription>Visualizes workflow health and helps identify bottlenecks over time.</CardDescription>
       </CardHeader>
       <CardContent className="h-[400px]">
-        <Area options={options} data={chartData} />
+        <Line options={options as any} data={chartData} />
       </CardContent>
     </Card>
   );
