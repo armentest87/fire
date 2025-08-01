@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { JiraConnection } from '@/components/jira-lens/jira-connection';
 import { DashboardTabs } from '@/components/jira-lens/dashboard-tabs';
 import { type JiraIssue } from '@/lib/types';
+import { PanelLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export default function Home() {
   const [issues, setIssues] = useState<JiraIssue[] | null>(null);
@@ -10,25 +13,52 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const sidebarContent = (
+    <>
+      <div className="p-6 border-b">
+        <h1 className="text-2xl font-bold text-primary">Jira Lens 📊</h1>
+        <p className="text-sm text-muted-foreground">Dynamic Insights Dashboard</p>
+      </div>
+      <div className="overflow-y-auto flex-1">
+        <JiraConnection 
+          jql={jql}
+          setJql={setJql}
+          setIssues={setIssues}
+          setIsLoading={setIsLoading}
+          setError={setError}
+        />
+      </div>
+    </>
+  );
+
   return (
     <div className="flex h-screen bg-background">
-      <aside className="w-[350px] flex-shrink-0 border-r bg-card flex flex-col">
-        <div className="p-6 border-b">
-            <h1 className="text-2xl font-bold text-primary-dark">Jira Lens 📊</h1>
-            <p className="text-sm text-muted-foreground">Dynamic Insights Dashboard</p>
-        </div>
-        <div className="overflow-y-auto flex-1">
-            <JiraConnection 
-              jql={jql}
-              setJql={setJql}
-              setIssues={setIssues}
-              setIsLoading={setIsLoading}
-              setError={setError}
-            />
-        </div>
+      <aside className="w-[350px] flex-shrink-0 border-r bg-card flex-col hidden lg:flex">
+        {sidebarContent}
       </aside>
-      <main className="flex-1 p-6 overflow-auto">
-        {isLoading && <div className="fixed inset-0 bg-background/50 z-50 flex items-center justify-center"><p>Loading data...</p></div>}
+      <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <header className="flex items-center gap-4 mb-4 lg:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <PanelLeft className="h-5 w-5" />
+                  <span className="sr-only">Toggle Sidebar</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-[350px]">
+                 <aside className="w-full h-full bg-card flex flex-col">
+                   {sidebarContent}
+                 </aside>
+              </SheetContent>
+            </Sheet>
+            <h1 className="text-xl font-bold text-primary">Jira Lens 📊</h1>
+        </header>
+
+        {isLoading && (
+          <div className="fixed inset-0 bg-background/50 z-50 flex items-center justify-center">
+            <p>Loading data...</p>
+          </div>
+        )}
         <DashboardTabs issues={issues} jql={jql} isLoading={isLoading} error={error} />
       </main>
     </div>

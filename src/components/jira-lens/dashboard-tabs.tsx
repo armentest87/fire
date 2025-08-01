@@ -5,7 +5,6 @@ import { Overview } from "./overview";
 import { CfdChart } from "./cfd-chart";
 import { SprintAnalysis } from "./sprint-analysis";
 import { CustomAnalysisBuilder } from "./custom-analysis-builder";
-import { AiSuggester } from "./ai-suggester";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
@@ -49,20 +48,16 @@ export function DashboardTabs({ issues, jql, isLoading, error }: DashboardTabsPr
 
   return (
     <Tabs defaultValue="overview" className="w-full animate-fade-in">
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="cfd">Cumulative Flow</TabsTrigger>
         <TabsTrigger value="sprint">Sprint Analysis</TabsTrigger>
         <TabsTrigger value="custom">Custom Analysis</TabsTrigger>
-        <TabsTrigger value="ai">AI Suggester</TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="mt-4">{renderContent(Overview, 'Overview')}</TabsContent>
       <TabsContent value="cfd" className="mt-4">{renderContent(CfdChart, 'Cumulative Flow')}</TabsContent>
       <TabsContent value="sprint" className="mt-4">{renderContent(SprintAnalysis, 'Sprint Analysis')}</TabsContent>
       <TabsContent value="custom" className="mt-4">{renderContent(CustomAnalysisBuilder, 'Custom Analysis')}</TabsContent>
-      <TabsContent value="ai" className="mt-4">
-        {isLoading ? <Skeleton className="h-[400px] w-full" /> : <AiSuggester jql={jql} />}
-      </TabsContent>
     </Tabs>
   );
 }
