@@ -1,7 +1,7 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Pie, Bar } from 'react-chartjs-2';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Pie, Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -14,11 +14,12 @@ import {
 } from 'chart.js';
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { ArrowUp, ArrowDown, Users, CheckCircle, Clock, FileText } from "lucide-react";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 
-const CHART_COLORS = ["#2563EB", "#0D9488", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
+const CHART_COLORS = ["#6366F1", "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
 
 interface OverviewProps {
   issues: JiraIssue[];
@@ -57,19 +58,21 @@ export function Overview({ issues }: OverviewProps) {
       statusDist: {
         labels: sortedStatus.map(s => s.name),
         datasets: [{
-          label: 'Issues by Status',
+          label: 'Issues',
           data: sortedStatus.map(s => s.value),
           backgroundColor: sortedStatus.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
           borderColor: '#FFFFFF',
-          borderWidth: 2,
+          borderWidth: 4,
+          hoverBorderWidth: 4,
+          hoverBorderColor: '#F7F7FA'
         }]
       },
       typeDist: {
         labels: sortedTypes.map(t => t.name),
         datasets: [{
-          label: 'Issues by Type',
+          label: 'Issues',
           data: sortedTypes.map(t => t.value),
-          backgroundColor: CHART_COLORS[0],
+          backgroundColor: sortedTypes.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
           borderRadius: 4,
         }]
       },
@@ -81,13 +84,7 @@ export function Overview({ issues }: OverviewProps) {
      maintainAspectRatio: false,
      plugins: {
         legend: {
-            labels: {
-                font: {
-                    family: "Inter, sans-serif",
-                    size: 12
-                },
-                 color: "#6B7280"
-            }
+            display: false,
         },
         tooltip: {
             backgroundColor: "#FFFFFF",
@@ -97,29 +94,32 @@ export function Overview({ issues }: OverviewProps) {
             borderWidth: 1,
             titleFont: { family: "Inter, sans-serif", size: 13, weight: '600' },
             bodyFont: { family: "Inter, sans-serif", size: 12 },
+            padding: 12,
+            cornerRadius: 8
         }
      }
   };
 
-  const pieOptions = {
+  const doughnutOptions = {
     ...commonOptions,
+    cutout: '70%',
     plugins: {
         ...commonOptions.plugins,
       legend: {
-        ...commonOptions.plugins.legend,
-        position: 'right' as const,
+        position: 'bottom' as const,
+        display: true,
+        labels: {
+            font: { family: "Inter, sans-serif", size: 12 },
+            color: "#6B7280",
+            boxWidth: 12,
+            padding: 15,
+        }
       },
     },
   };
 
   const barOptions = {
     ...commonOptions,
-    plugins: {
-        ...commonOptions.plugins,
-      legend: {
-        display: false,
-      },
-    },
     scales: {
       y: {
         beginAtZero: true,
@@ -137,59 +137,53 @@ export function Overview({ issues }: OverviewProps) {
     },
   };
 
+  const MetricCard = ({ icon: Icon, iconBg, title, value, delta, deltaColor }: { icon: React.ElementType, iconBg: string, title: string, value: string, delta?: string, deltaColor?: string }) => (
+    <Card className="shadow-sm border-border/60 hover:shadow-md transition-shadow duration-300">
+      <CardContent className="p-5 flex items-center gap-5">
+        <div className={cn("p-3 rounded-lg", iconBg)}>
+          <Icon className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+        </div>
+        {delta && (
+          <div className={cn("ml-auto flex items-center text-sm font-semibold", deltaColor)}>
+            {delta.startsWith('+') ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+            {delta.substring(1)}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-1.5">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium text-neutral-gray">Total Issues</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-bold">{stats.totalIssues}</p>
-            </CardContent>
-        </Card>
-         <Card className="p-1.5 bg-blue-50/50 border-l-4 border-primary-blue">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium text-primary-blue">Completed Issues</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-bold text-primary-blue">{stats.doneIssues}</p>
-            </CardContent>
-        </Card>
-         <Card className="p-1.5 bg-green-50/50 border-l-4 border-success-green">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium text-success-green">Completion Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-bold text-success-green">{stats.completionRate.toFixed(1)}%</p>
-            </CardContent>
-        </Card>
-        <Card className="p-1.5">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium text-neutral-gray">Avg. Resolution (Days)</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-2xl font-bold">{stats.avgResolutionTime > 0 ? stats.avgResolutionTime.toFixed(1) : 'N/A'}</p>
-            </CardContent>
-        </Card>
+        <MetricCard icon={FileText} iconBg="bg-pink-500" title="Total Issues" value={`${stats.totalIssues}`} delta="+12%" deltaColor="text-green-600" />
+        <MetricCard icon={Users} iconBg="bg-blue-500" title="Completed Issues" value={`${stats.doneIssues}`} delta="+8%" deltaColor="text-green-600"/>
+        <MetricCard icon={CheckCircle} iconBg="bg-green-500" title="Completion Rate" value={`${stats.completionRate.toFixed(1)}%`} delta="+5%" deltaColor="text-green-600" />
+        <MetricCard icon={Clock} iconBg="bg-orange-500" title="Avg. Resolution" value={`${stats.avgResolutionTime > 0 ? stats.avgResolutionTime.toFixed(1) : 'N/A'}d`} delta="-2d" deltaColor="text-red-600"/>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Issues by Status</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <Pie data={statusDist} options={pieOptions as any} />
-          </CardContent>
-        </Card>
-
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Card className="lg:col-span-3 shadow-sm border-border/60 hover:shadow-md transition-shadow duration-300">
           <CardHeader>
             <CardTitle>Issues by Type</CardTitle>
+             <CardDescription>Distribution of various issue types.</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[350px]">
              <Bar data={typeDist} options={barOptions as any} />
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2 shadow-sm border-border/60 hover:shadow-md transition-shadow duration-300">
+          <CardHeader>
+            <CardTitle>Issues by Status</CardTitle>
+            <CardDescription>Current status of all issues.</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[350px] flex items-center justify-center">
+            <Doughnut data={statusDist} options={doughnutOptions as any} />
           </CardContent>
         </Card>
       </div>

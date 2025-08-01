@@ -4,26 +4,28 @@
 
 @layer base {
   :root {
-    --background: 220 17% 98%; /* #F9FAFB */
+    --background: 240 10% 97%; /* #F7F7FA */
     --foreground: 224 7% 15%;
     --card: 0 0% 100%;
     --card-foreground: 224 7% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 7% 15%;
-    --primary: 224 82% 57%; /* #2563EB */
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 13% 91%;
+    --primary: 221 83% 53%; /* #3B82F6 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 90%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 220 13% 91%;
+    --muted: 240 5% 90%;
     --muted-foreground: 215 6% 50%;
-    --accent: 173 80% 36%; /* #0D9488 */
+    --accent: 260 80% 60%; /* #7C3AED */
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --destructive: 3 84% 60%; /* #F97066 -> Adjusted from image for better contrast */
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 224 82% 57%;
+    --ring: 221 83% 53%;
     --radius: 0.75rem;
+    --sidebar: 250 50% 98%;
+    --sidebar-foreground: 224 7% 15%;
   }
 
   .dark {
@@ -33,19 +35,21 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 82% 77%;
+    --primary: 221 83% 63%;
     --primary-foreground: 210 40% 9.8%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    --accent: 173 80% 46%;
+    --accent: 260 80% 70%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 17%;
     --input: 217 33% 17%;
-    --ring: 210 82% 77%;
+    --ring: 221 83% 63%;
+    --sidebar: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
   }
 }
 
@@ -61,12 +65,15 @@
 
 @layer utilities {
   .metric-card {
-    @apply rounded-lg border p-4;
+    @apply rounded-xl border bg-card p-4 shadow-sm;
   }
   .metric-card h3 {
-    @apply text-sm font-medium;
+    @apply text-sm font-medium text-muted-foreground;
   }
   .metric-card p {
     @apply text-2xl font-bold;
+  }
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
   }
 }

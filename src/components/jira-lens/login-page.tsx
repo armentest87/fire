@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { type JiraCredentials } from '@/lib/types';
-import { LogIn } from 'lucide-react';
+import { LogIn, Briefcase } from 'lucide-react';
 
 interface LoginPageProps {
   onLogin: (credentials: JiraCredentials) => void;
@@ -29,15 +29,16 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-md shadow-2xl">
+    <div className="flex items-center justify-center h-full bg-background font-sans">
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 via-transparent to-accent/10 -z-10" />
+      <Card className="w-full max-w-md shadow-2xl border-border/60">
         <form onSubmit={handleSubmit}>
           <CardHeader className="text-center">
-             <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit">
-                <LogIn className="w-8 h-8 text-primary" />
+             <div className="mx-auto bg-gradient-to-br from-primary to-accent text-white p-3 rounded-xl w-fit shadow-lg">
+                <Briefcase className="w-8 h-8" />
              </div>
-            <CardTitle className="mt-4 text-2xl">Connect to Jira</CardTitle>
-            <CardDescription>Enter your credentials to analyze your project data. The Jira instance is preset to: <br/> <code className="p-1 bg-muted rounded-md text-foreground">{JIRA_URL}</code></CardDescription>
+            <CardTitle className="mt-4 text-3xl font-bold">Jira Lens</CardTitle>
+            <CardDescription>Connect to Jira to analyze your project data. The Jira instance is preset to: <br/> <code className="p-1 mt-2 inline-block bg-muted rounded-md text-foreground text-xs">{JIRA_URL}</code></CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -55,6 +56,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               <Input 
                 id="jira-token" 
                 type="password" 
+                placeholder="Your Jira API Token"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 required

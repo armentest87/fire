@@ -24,11 +24,11 @@ interface JiraFilterSidebarProps {
   setIssues: (issues: JiraIssue[] | null) => void;
   setIsLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  isLoading: boolean;
 }
 
-export function JiraFilterSidebar({ credentials, jql, setJql, setIssues, setIsLoading, setError }: JiraFilterSidebarProps) {
+export function JiraFilterSidebar({ credentials, jql, setJql, setIssues, setIsLoading, setError, isLoading }: JiraFilterSidebarProps) {
   const { toast } = useToast();
-  const [localIsLoading, setLocalIsLoading] = useState(false);
 
   // States for basic filters
   const [project, setProject] = useState('');
@@ -46,7 +46,6 @@ export function JiraFilterSidebar({ credentials, jql, setJql, setIssues, setIsLo
   };
   
   const handleFetch = async () => {
-    setLocalIsLoading(true);
     setIsLoading(true);
     setError(null);
     setIssues(null);
@@ -82,13 +81,14 @@ export function JiraFilterSidebar({ credentials, jql, setJql, setIssues, setIsLo
       });
     } finally {
       setIsLoading(false);
-      setLocalIsLoading(false);
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
-       <Tabs defaultValue="basic" className="w-full">
+    <div className="flex flex-col h-full">
+      <div className="flex-1 space-y-6">
+        <h2 className="text-xl font-bold">Filters</h2>
+        <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="basic"><SlidersHorizontal className="mr-2 h-4 w-4"/>Basic</TabsTrigger>
                 <TabsTrigger value="jql"><FileText className="mr-2 h-4 w-4"/>JQL</TabsTrigger>
@@ -165,14 +165,17 @@ export function JiraFilterSidebar({ credentials, jql, setJql, setIssues, setIsLo
                 />
             </TabsContent>
         </Tabs>
-      <Button onClick={handleFetch} disabled={localIsLoading} className="w-full" size="lg">
-        {localIsLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-            <Rocket className="mr-2 h-4 w-4" />
-        )}
-        Fetch & Analyze
-      </Button>
+      </div>
+      <div className="mt-auto">
+        <Button onClick={handleFetch} disabled={isLoading} className="w-full" size="lg">
+          {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+              <Rocket className="mr-2 h-4 w-4" />
+          )}
+          Fetch & Analyze
+        </Button>
+      </div>
     </div>
   );
 }

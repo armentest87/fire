@@ -57,17 +57,17 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        'primary-blue': '#2563EB',
-        'accent-teal': '#0D9488',
-        'success-green': '#10B981',
-        'warning-orange': '#F59E0B',
-        'error-red': '#EF4444',
-        'neutral-gray': '#6B7280',
+        sidebar: {
+            DEFAULT: "hsl(var(--sidebar))",
+            foreground: "hsl(var(--sidebar-foreground))"
+        }
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
       },
       keyframes: {
         "accordion-down": {
