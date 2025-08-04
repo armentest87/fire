@@ -2,10 +2,11 @@
 import React from "react";
 import { type JiraIssue } from "@/lib/types";
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info, ChevronDown, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
+
 
 interface UserWorkloadReportProps {
   issues: JiraIssue[];
@@ -30,6 +31,8 @@ export function UserWorkloadReport({ issues }: UserWorkloadReportProps) {
 
     const workloadData: WorkloadData[] = useMemo(() => {
         const dataByAssignee = issues.reduce((acc, issue) => {
+            if (issue.status_category === 'Done') return acc;
+            
             const assignee = issue.assignee || 'Unassigned';
             if (!acc[assignee]) {
                 acc[assignee] = {
@@ -54,7 +57,7 @@ export function UserWorkloadReport({ issues }: UserWorkloadReportProps) {
             issueCount: data.issueCount,
             estimateOriginal: data.estimateOriginal,
             estimateRemaining: data.estimateRemaining,
-        }));
+        })).sort((a,b) => b.issueCount - a.issueCount);
     }, [issues]);
 
     const toggleRow = (assignee: string) => {
@@ -70,46 +73,48 @@ export function UserWorkloadReport({ issues }: UserWorkloadReportProps) {
     <Card>
       <CardHeader>
         <CardTitle>User Workload Report</CardTitle>
-        <Info className="h-4 w-4 text-gray-400" />
+        <CardDescription>Breakdown of open issues and workload per user.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-2/5">Assignee</TableHead>
-                        <TableHead className="w-1/5">Project</TableHead>
-                        <TableHead>Number of Issues</TableHead>
-                        <TableHead>Estimate Original (h)</TableHead>
-                        <TableHead>Estimate Remaining (h)</TableHead>
+                        <TableHead className="w-[40%]">Assignee</TableHead>
+                        <TableHead className="w-[20%]">Project</TableHead>
+                        <TableHead className="text-right">Issues</TableHead>
+                        <TableHead className="text-right">Est. Original (h)</TableHead>
+                        <TableHead className="text-right">Est. Remaining (h)</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableRow className="bg-gray-100 font-semibold">
+                    <TableRow className="bg-muted/50 font-semibold hover:bg-muted/50">
                         <TableCell colSpan={2}>Open Issues Total</TableCell>
-                        <TableCell>{totalIssues}</TableCell>
-                        <TableCell>{formatHours(totalEstimateOriginal)}</TableCell>
-                        <TableCell>{formatHours(totalEstimateRemaining)}</TableCell>
+                        <TableCell className="text-right">{totalIssues}</TableCell>
+                        <TableCell className="text-right">{formatHours(totalEstimateOriginal)}</TableCell>
+                        <TableCell className="text-right">{formatHours(totalEstimateRemaining)}</TableCell>
                     </TableRow>
                     {workloadData.map(row => (
                        <React.Fragment key={row.assignee}>
-                            <TableRow className="cursor-pointer hover:bg-gray-50" onClick={() => toggleRow(row.assignee)}>
-                                <TableCell className="font-medium flex items-center gap-2">
-                                     {expandedRows[row.assignee] ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
-                                    {row.assignee}
+                            <TableRow>
+                                <TableCell>
+                                    <Button variant="ghost" size="sm" onClick={() => toggleRow(row.assignee)} className="-ml-2">
+                                        {expandedRows[row.assignee] ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
+                                        <span className="font-medium ml-2">{row.assignee}</span>
+                                    </Button>
                                 </TableCell>
                                 <TableCell>Assignee Open Issues Total</TableCell>
-                                <TableCell>{row.issueCount}</TableCell>
-                                <TableCell>{formatHours(row.estimateOriginal)}</TableCell>
-                                <TableCell>{formatHours(row.estimateRemaining)}</TableCell>
+                                <TableCell className="text-right">{row.issueCount}</TableCell>
+                                <TableCell className="text-right">{formatHours(row.estimateOriginal)}</TableCell>
+                                <TableCell className="text-right">{formatHours(row.estimateRemaining)}</TableCell>
                             </TableRow>
                             {expandedRows[row.assignee] && (
                                 <>
                                  {row.projects.map(p => (
-                                    <TableRow key={p.name} className="bg-gray-50/50">
+                                    <TableRow key={p.name} className="bg-muted/20 hover:bg-muted/40">
                                         <TableCell></TableCell>
-                                        <TableCell className="pl-12">{p.name}</TableCell>
-                                        <TableCell>{p.count}</TableCell>
+                                        <TableCell className="pl-12 text-muted-foreground">{p.name}</TableCell>
+                                        <TableCell className="text-right text-muted-foreground">{p.count}</TableCell>
                                         <TableCell></TableCell>
                                         <TableCell></TableCell>
                                     </TableRow>
@@ -118,6 +123,13 @@ export function UserWorkloadReport({ issues }: UserWorkloadReportProps) {
                             )}
                        </React.Fragment>
                     ))}
+                     {workloadData.length === 0 && (
+                       <TableRow>
+                           <TableCell colSpan={5} className="text-center h-24">
+                               No open issues assigned to users.
+                           </TableCell>
+                       </TableRow>
+                   )}
                 </TableBody>
             </Table>
         </div>

@@ -18,9 +18,9 @@ export function Overview({ issues }: { issues: JiraIssue[] }) {
         <div className="space-y-6">
             <KpiCards issues={issues} />
             
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-2"><IssuesByStatusChart issues={issues} /></div>
-                <div className="lg:col-span-3"><ProjectProgressChart issues={issues} /></div>
+            <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                <div className="xl:col-span-2"><IssuesByStatusChart issues={issues} /></div>
+                <div className="xl:col-span-3"><ProjectProgressChart issues={issues} /></div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

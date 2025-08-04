@@ -17,9 +17,11 @@ interface DashboardPageProps {
 }
 
 const WelcomePlaceholder = () => (
-    <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-      <h2 className="text-2xl font-semibold mb-2 text-gray-800 dark:text-gray-100">Welcome to Jira Lens</h2>
-      <p className="text-gray-500 dark:text-gray-400">Use the filters in the sidebar to fetch your project data and begin your analysis.</p>
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center p-8 bg-card rounded-lg shadow-md border">
+        <h2 className="text-2xl font-semibold mb-2">Welcome to Jira Lens</h2>
+        <p className="text-muted-foreground">Use the filters in the sidebar to fetch your project data and begin your analysis.</p>
+      </div>
     </div>
 );
 
@@ -64,18 +66,17 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       <JiraFilterSidebar
           onFetch={handleFetch}
           isLoading={isLoading}
-          onLogout={onLogout}
       />
   );
 
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen w-full bg-background">
        <aside className={cn(
-           "hidden lg:block bg-white dark:bg-gray-800/50 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out",
-           isSidebarOpen ? 'w-80' : 'w-0'
+           "hidden lg:flex flex-col bg-card border-r transition-all duration-300 ease-in-out",
+           isSidebarOpen ? 'w-80' : 'w-0 border-r-0'
        )}>
-          <div className="p-4 flex flex-col h-full">
+          <div className={cn("p-4 flex flex-col h-full transition-opacity", isSidebarOpen ? 'opacity-100' : 'opacity-0')}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Filters</h2>
                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
@@ -86,8 +87,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
           </div>
        </aside>
 
-      <main className="flex-1 p-6 bg-gray-50/50 dark:bg-gray-900/50">
-        <header className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col flex-1 w-full min-w-0">
+        <header className="flex items-center gap-4 py-3 px-4 sm:px-6 border-b sticky top-0 bg-background z-10">
             <Sheet open={isMobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="lg:hidden">
@@ -95,45 +96,51 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                   <span className="sr-only">Toggle Sidebar</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-80 p-4 bg-white dark:bg-gray-900">
-                  <SheetHeader>
-                      <SheetTitle>Filters</SheetTitle>
-                      <SheetDescription>
-                          Use the filters below to fetch and analyze your Jira data.
-                      </SheetDescription>
-                  </SheetHeader>
-                  {sidebarContent}
+              <SheetContent side="left" className="w-80 p-0 flex flex-col bg-card">
+                  <div className="p-4">
+                    <SheetHeader>
+                        <SheetTitle>Filters</SheetTitle>
+                        <SheetDescription>
+                            Use the filters below to fetch and analyze your Jira data.
+                        </SheetDescription>
+                    </SheetHeader>
+                  </div>
+                  <div className="p-4 flex-grow overflow-y-auto">
+                    {sidebarContent}
+                  </div>
               </SheetContent>
             </Sheet>
 
           {!isSidebarOpen && (
-            <Button variant="outline" onClick={() => setSidebarOpen(true)}>
+            <Button variant="outline" onClick={() => setSidebarOpen(true)} className="hidden lg:inline-flex">
               <PanelLeft className="h-5 w-5 mr-2" />
               Filters
             </Button>
           )}
 
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+          <h1 className="text-xl md:text-2xl font-bold flex-1 truncate">
             Jira Lens
           </h1>
           <div className="ml-auto">
              <Button variant="ghost" onClick={onLogout}>
               <LogOut className="mr-2 h-5 w-5" />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </header>
 
-        <div className="h-[calc(100vh-8rem)] overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
             {!issues && !isLoading && <WelcomePlaceholder />}
             {isLoading && (
                  <div className="flex items-center justify-center h-full">
-                    <p className="text-lg text-gray-600 dark:text-gray-300">Loading project data...</p>
+                    <div className="text-center">
+                      <p className="text-lg text-muted-foreground">Loading project data...</p>
+                    </div>
                 </div>
             )}
             {issues && <DashboardTabs issues={issues} />}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

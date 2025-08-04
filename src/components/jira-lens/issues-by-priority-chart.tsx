@@ -1,10 +1,10 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Info } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -17,6 +17,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
+  const isMobile = useIsMobile();
   const chartData = useMemo(() => {
     const priorityCounts = issues.reduce((acc, issue) => {
       const priority = issue.priority || 'No Priority';
@@ -34,7 +35,7 @@ export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
         label: 'Issues by Priority',
         data,
         backgroundColor,
-        borderColor: '#fff',
+        borderColor: 'hsl(var(--card))',
         borderWidth: 2,
         hoverOffset: 4
       }]
@@ -48,10 +49,10 @@ export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-         position: 'bottom' as const,
+         position: isMobile ? 'top' : 'right' as const,
          labels: {
              boxWidth: 12,
-             padding: 10,
+             padding: isMobile ? 8 : 20,
              font: { size: 12 },
          }
       },
@@ -63,7 +64,8 @@ export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
                         label += ': ';
                     }
                     const value = context.parsed;
-                    const percentage = ((value / totalIssues) * 100).toFixed(2);
+                    if (value === null) return '';
+                    const percentage = totalIssues > 0 ? ((value / totalIssues) * 100).toFixed(1) : 0;
                     return `${label} ${value} issues (${percentage}%)`;
                 }
             }
@@ -72,12 +74,12 @@ export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
   };
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>Issues by Priority</CardTitle>
-        <Info className="h-4 w-4 text-gray-400" />
+        <CardDescription>Distribution of issues across different priority levels.</CardDescription>
       </CardHeader>
-      <CardContent className="h-64">
+      <CardContent className="flex-grow min-h-[250px] sm:min-h-[300px]">
          <Pie data={chartData} options={options as any} />
       </CardContent>
     </Card>
