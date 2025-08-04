@@ -19,6 +19,8 @@ interface JiraFilterPopoverProps {
     onFilterChange: (filteredIssues: JiraIssue[]) => void;
     assignees: string[];
     statuses: string[];
+    issueTypes: string[];
+    priorities: string[];
 }
 
 interface Filters {
@@ -26,6 +28,8 @@ interface Filters {
     assignees: Set<string>;
     statuses: Set<string>;
     issueKey: string;
+    issueTypes: Set<string>;
+    priorities: Set<string>;
 }
 
 const initialFilters: Filters = {
@@ -33,9 +37,11 @@ const initialFilters: Filters = {
     assignees: new Set(),
     statuses: new Set(),
     issueKey: '',
+    issueTypes: new Set(),
+    priorities: new Set(),
 };
 
-export function JiraFilterPopover({ allIssues, onFilterChange, assignees, statuses }: JiraFilterPopoverProps) {
+export function JiraFilterPopover({ allIssues, onFilterChange, assignees, statuses, issueTypes, priorities }: JiraFilterPopoverProps) {
     const [filters, setFilters] = useState<Filters>(initialFilters);
     const [open, setOpen] = useState(false);
     
@@ -50,6 +56,12 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
         }
         if (filters.statuses.size > 0) {
             filtered = filtered.filter(issue => filters.statuses.has(issue.status));
+        }
+        if (filters.issueTypes.size > 0) {
+            filtered = filtered.filter(issue => filters.issueTypes.has(issue.issuetype));
+        }
+        if (filters.priorities.size > 0) {
+            filtered = filtered.filter(issue => filters.priorities.has(issue.priority));
         }
         if (filters.issueKey) {
             filtered = filtered.filter(issue => issue.key.toLowerCase().includes(filters.issueKey.toLowerCase()));
@@ -78,6 +90,8 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
         if(filters.date) count++;
         if(filters.assignees.size > 0) count++;
         if(filters.statuses.size > 0) count++;
+        if(filters.issueTypes.size > 0) count++;
+        if(filters.priorities.size > 0) count++;
         if(filters.issueKey) count++;
         return count;
     }, [filters]);
@@ -179,6 +193,44 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
                                                         <Check className={cn("h-4 w-4")} />
                                                     </div>
                                                     {status}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Issue Type</Label>
+                                <Command>
+                                    <CommandInput placeholder="Filter issue types..." />
+                                    <CommandList>
+                                        <CommandEmpty>No results found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {issueTypes.map(it => (
+                                                <CommandItem key={it} onSelect={() => setFilters(f => ({ ...f, issueTypes: toggleSetItem(f.issueTypes, it)}))}>
+                                                     <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.issueTypes.has(it) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                                        <Check className={cn("h-4 w-4")} />
+                                                    </div>
+                                                    {it}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Priority</Label>
+                                <Command>
+                                    <CommandInput placeholder="Filter priorities..." />
+                                    <CommandList>
+                                        <CommandEmpty>No results found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {priorities.map(p => (
+                                                <CommandItem key={p} onSelect={() => setFilters(f => ({ ...f, priorities: toggleSetItem(f.priorities, p)}))}>
+                                                     <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.priorities.has(p) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                                        <Check className={cn("h-4 w-4")} />
+                                                    </div>
+                                                    {p}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>

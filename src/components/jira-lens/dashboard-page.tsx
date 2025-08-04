@@ -57,10 +57,12 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   };
   
   const uniqueFilterOptions = useMemo(() => {
-    if (!allIssues) return { assignees: [], statuses: [] };
+    if (!allIssues) return { assignees: [], statuses: [], issueTypes: [], priorities: [] };
     const assignees = [...new Set(allIssues.map(i => i.assignee).filter(Boolean))].sort();
     const statuses = [...new Set(allIssues.map(i => i.status))].sort();
-    return { assignees, statuses };
+    const issueTypes = [...new Set(allIssues.map(i => i.issuetype))].sort();
+    const priorities = [...new Set(allIssues.map(i => i.priority))].sort();
+    return { assignees, statuses, issueTypes, priorities };
   }, [allIssues]);
 
 
@@ -78,6 +80,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               onFilterChange={setFilteredIssues}
               assignees={uniqueFilterOptions.assignees}
               statuses={uniqueFilterOptions.statuses}
+              issueTypes={uniqueFilterOptions.issueTypes}
+              priorities={uniqueFilterOptions.priorities}
             />
           )}
 
