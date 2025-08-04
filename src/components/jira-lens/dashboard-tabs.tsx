@@ -3,6 +3,7 @@ import { type JiraIssue } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Overview } from "./overview";
 import { SprintAnalysis } from "./sprint-analysis";
+import { TimeworkReport } from "./timework-report";
 
 
 export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
@@ -22,12 +23,16 @@ export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
             <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="sprint-analysis">Sprint Analysis</TabsTrigger>
+                <TabsTrigger value="timework-report">Timework Report</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
                  <Overview issues={issues} />
             </TabsContent>
             <TabsContent value="sprint-analysis">
                 <SprintAnalysis issues={issues} />
+            </TabsContent>
+            <TabsContent value="timework-report">
+                <TimeworkReport issues={issues} />
             </TabsContent>
         </Tabs>
     );
