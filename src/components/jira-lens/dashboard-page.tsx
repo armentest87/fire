@@ -8,6 +8,8 @@ import { LogOut, Filter, Loader2 } from 'lucide-react';
 import { fetchJiraData } from '@/lib/dummy-data';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
+import { FetchDataDialog } from './fetch-data-dialog';
+
 
 interface DashboardPageProps {
   credentials: JiraCredentials;
@@ -27,15 +29,15 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [allIssues, setAllIssues] = useState<JiraIssue[] | null>(null);
   const [filteredIssues, setFilteredIssues] = useState<JiraIssue[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchDialogOpen, setIsFetchDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleFetch = async () => {
+  const handleFetch = async (jql: string) => {
     setIsLoading(true);
     setAllIssues(null);
     setFilteredIssues(null);
     try {
-      // In a real app, the initial JQL might be more specific
-      const data = await fetchJiraData("project = PROJ"); 
+      const data = await fetchJiraData(jql); 
       setAllIssues(data);
       setFilteredIssues(data);
       toast({
@@ -50,6 +52,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       });
     } finally {
       setIsLoading(false);
+      setIsFetchDialogOpen(false);
     }
   };
   
@@ -78,7 +81,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             />
           )}
 
-          <Button onClick={handleFetch} disabled={isLoading}>
+          <Button onClick={() => setIsFetchDialogOpen(true)} disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -88,6 +91,13 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                'Fetch Data'
             )}
           </Button>
+
+          <FetchDataDialog
+            isOpen={isFetchDialogOpen}
+            onOpenChange={setIsFetchDialogOpen}
+            onFetch={handleFetch}
+            isFetching={isLoading}
+           />
 
           <Button variant="ghost" onClick={onLogout}>
             <LogOut className="mr-2 h-5 w-5" />

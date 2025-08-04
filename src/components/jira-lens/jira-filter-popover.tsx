@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { type JiraIssue } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,34 +27,42 @@ interface Filters {
     issueKey: string;
 }
 
+const initialFilters: Filters = {
+    date: undefined,
+    assignees: new Set(),
+    statuses: new Set(),
+    issueKey: '',
+};
+
 export function JiraFilterPopover({ allIssues, onFilterChange, assignees, statuses }: JiraFilterPopoverProps) {
-    const [filters, setFilters] = useState<Filters>({
-        date: undefined,
-        assignees: new Set(),
-        statuses: new Set(),
-        issueKey: '',
-    });
+    const [filters, setFilters] = useState<Filters>(initialFilters);
     const [open, setOpen] = useState(false);
     
     const applyFilters = useCallback(() => {
-        const filtered = allIssues.filter(issue => {
-            const createdDate = parseISO(issue.created);
-            if (filters.date && createdDate < filters.date) {
-                return false;
-            }
-            if (filters.assignees.size > 0 && !filters.assignees.has(issue.assignee)) {
-                return false;
-            }
-            if (filters.statuses.size > 0 && !filters.statuses.has(issue.status)) {
-                return false;
-            }
-            if (filters.issueKey && !issue.key.toLowerCase().includes(filters.issueKey.toLowerCase())) {
-                return false;
-            }
-            return true;
-        });
+        let filtered = allIssues;
+
+        if (filters.date) {
+            filtered = filtered.filter(issue => parseISO(issue.created) >= filters.date!);
+        }
+        if (filters.assignees.size > 0) {
+            filtered = filtered.filter(issue => issue.assignee && filters.assignees.has(issue.assignee));
+        }
+        if (filters.statuses.size > 0) {
+            filtered = filtered.filter(issue => filters.statuses.has(issue.status));
+        }
+        if (filters.issueKey) {
+            filtered = filtered.filter(issue => issue.key.toLowerCase().includes(filters.issueKey.toLowerCase()));
+        }
+        
         onFilterChange(filtered);
+
     }, [filters, allIssues, onFilterChange]);
+
+    // When the underlying issue set changes (e.g., a new fetch), reset filters.
+    useEffect(() => {
+        setFilters(initialFilters);
+    }, [allIssues]);
+
 
     const handleApply = () => {
         applyFilters();
@@ -62,14 +70,8 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
     };
     
     const handleClear = () => {
-        const newFilters = {
-            date: undefined,
-            assignees: new Set(),
-            statuses: new Set(),
-            issueKey: '',
-        };
-        setFilters(newFilters);
-        onFilterChange(allIssues); // Reset to show all issues
+        setFilters(initialFilters);
+        onFilterChange(allIssues);
     };
     
     const activeFilterCount = useMemo(() => {
