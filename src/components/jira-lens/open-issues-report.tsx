@@ -14,7 +14,7 @@ interface OpenIssuesReportProps {
 const PRIORITY_ICON: Record<string, React.ReactNode> = {
     'Highest': <ArrowUp className="h-4 w-4 text-red-600"/>,
     'High': <ArrowUp className="h-4 w-4 text-orange-500"/>,
-    'Medium': <ArrowRight className="h-4 w-4 text-yellow-500 rotate-[-90deg]"/>,
+    'Medium': <ArrowRight className="h-4 w-4 text-yellow-500"/>,
     'Low': <ArrowDown className="h-4 w-4 text-green-500"/>,
     'Lowest': <ArrowDown className="h-4 w-4 text-blue-500"/>,
 };
