@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { UserWorkloadReport } from "./user-workload-report";
+import { OpenIssuesReport } from "./open-issues-report";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -142,8 +144,10 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
                 </div>
             </div>
             
-            <TimeworkMatrixTable />
-
+            <div className="space-y-6">
+                <UserWorkloadReport issues={issues} />
+                <OpenIssuesReport issues={issues} />
+            </div>
         </div>
     );
 }
