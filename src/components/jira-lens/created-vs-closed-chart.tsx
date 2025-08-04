@@ -52,8 +52,8 @@ export function CreatedVsClosedChart({ issues }: { issues: JiraIssue[] }) {
                 {
                     label: 'Cumulative Created',
                     data: createdData,
-                    borderColor: 'hsl(var(--primary))',
-                    backgroundColor: 'hsla(var(--primary), 0.2)',
+                    borderColor: '#219ebc',
+                    backgroundColor: 'rgba(33, 158, 188, 0.2)',
                     fill: true,
                     tension: 0.1,
                     pointRadius: 0,
@@ -61,8 +61,8 @@ export function CreatedVsClosedChart({ issues }: { issues: JiraIssue[] }) {
                 {
                     label: 'Cumulative Closed',
                     data: closedData,
-                    borderColor: 'hsl(var(--secondary-foreground))',
-                    backgroundColor: 'hsla(var(--secondary), 0.2)',
+                    borderColor: '#023047',
+                    backgroundColor: 'rgba(2, 48, 71, 0.2)',
                     fill: true,
                     tension: 0.1,
                     pointRadius: 0,

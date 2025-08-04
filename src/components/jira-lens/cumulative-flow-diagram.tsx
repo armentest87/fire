@@ -110,8 +110,8 @@ export function CumulativeFlowDiagram({ issues }: { issues: JiraIssue[] }) {
                     {
                         label: 'Done',
                         data: doneData,
-                        backgroundColor: 'rgba(102, 187, 106, 0.6)', // hsl(var(--secondary)) with opacity
-                        borderColor: 'hsl(var(--secondary-foreground))',
+                        backgroundColor: 'rgba(2, 48, 71, 0.6)',
+                        borderColor: '#023047',
                         fill: true,
                         pointRadius: 0,
                         tension: 0.1,
@@ -119,8 +119,8 @@ export function CumulativeFlowDiagram({ issues }: { issues: JiraIssue[] }) {
                     {
                         label: 'In Progress',
                         data: inProgressData,
-                        backgroundColor: 'rgba(66, 165, 245, 0.6)', // hsl(var(--primary)) with opacity
-                        borderColor: 'hsl(var(--primary-foreground))',
+                        backgroundColor: 'rgba(33, 158, 188, 0.6)',
+                        borderColor: '#219ebc',
                         fill: true,
                         pointRadius: 0,
                         tension: 0.1,
@@ -128,8 +128,8 @@ export function CumulativeFlowDiagram({ issues }: { issues: JiraIssue[] }) {
                      {
                         label: 'To Do',
                         data: toDoData,
-                        backgroundColor: 'rgba(255, 167, 38, 0.6)', // Orange
-                        borderColor: '#FF9800',
+                        backgroundColor: 'rgba(255, 183, 3, 0.6)',
+                        borderColor: '#ffb703',
                         fill: true,
                         pointRadius: 0,
                         tension: 0.1,

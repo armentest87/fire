@@ -8,7 +8,7 @@ import { Info } from "lucide-react";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const TYPE_COLORS = ["#5D9CEC", "#4A89DC", "#3BAFDA", "#4FC1E9", "#37BC9B", "#8CC152", "#FFCE54", "#F6BB42", "#E9573F", "#DA4453", "#967ADC", "#D770AD"];
+const TYPE_COLORS = ["#219ebc", "#8ecae6", "#023047", "#ffb703", "#fb8500", "#a8dadc"];
 
 
 export function IssuesByTypeChart({ issues }: { issues: JiraIssue[] }) {

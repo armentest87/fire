@@ -23,8 +23,8 @@ const IssuesByTypeDonut = ({ issues }: { issues: JiraIssue[] }) => {
             labels: Object.keys(typeCounts),
             datasets: [{
                 data: Object.values(typeCounts),
-                backgroundColor: ['#DA4453', '#5D9CEC'],
-                hoverBackgroundColor: ['#E9573F', '#4A89DC']
+                backgroundColor: ['#fb8500', '#219ebc'],
+                hoverBackgroundColor: ['#ffb703', '#8ecae6']
             }]
         }
     }, [issues]);
@@ -70,8 +70,8 @@ const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
         return {
             labels,
             datasets: [
-                { label: 'Bug', data: labels.map(l => dailyData[l].Bug), backgroundColor: '#DA4453' },
-                { label: 'Task', data: labels.map(l => dailyData[l].Task), backgroundColor: '#5D9CEC' },
+                { label: 'Bug', data: labels.map(l => dailyData[l].Bug), backgroundColor: '#fb8500' },
+                { label: 'Task', data: labels.map(l => dailyData[l].Task), backgroundColor: '#219ebc' },
             ]
         }
     }, [issues]);
@@ -104,7 +104,7 @@ const CumulativeIssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
             datasets: [{
                 label: 'Cumulative Issues',
                 data: cumulativeData,
-                borderColor: 'hsl(var(--primary))',
+                borderColor: '#219ebc',
                 fill: false,
                 tension: 0.1,
                 pointRadius: 0,

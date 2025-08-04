@@ -9,14 +9,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const STATUS_COLORS: Record<string, string> = {
-    'To Do': '#F28B50',
-    'Done': '#8CC152',
-    'Open': '#F6BB42',
-    'In Progress': '#5D9CEC',
-    'Implementing': '#4A89DC',
-    'Canceled': '#DA4453',
-    'Waiting for customer': '#967ADC',
-    'Waiting for support': '#D770AD',
+    'To Do': '#ffb703',
+    'Done': '#8ecae6',
+    'Open': '#ffb703',
+    'In Progress': '#219ebc',
+    'Implementing': '#023047',
+    'Canceled': '#fb8500',
+    'Waiting for customer': '#a8dadc',
+    'Waiting for support': '#d9ed92',
     'No Category': '#B0BEC5'
 };
 

@@ -27,8 +27,8 @@ export function HoursByUserChart({ issues }: { issues: JiraIssue[] }) {
         {
           label: 'Hours Logged',
           data,
-          backgroundColor: 'hsl(var(--primary))',
-          borderColor: 'hsl(var(--primary))',
+          backgroundColor: '#219ebc',
+          borderColor: '#219ebc',
           borderWidth: 1,
           barThickness: 15,
         },

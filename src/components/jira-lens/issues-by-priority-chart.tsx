@@ -9,11 +9,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const PRIORITY_COLORS: Record<string, string> = {
-    'Highest': '#DA4453',
-    'High': '#E9573F',
-    'Medium': '#F6BB42',
-    'Low': '#8CC152',
-    'Lowest': '#37BC9B',
+    'Highest': '#fb8500',
+    'High': '#ffb703',
+    'Medium': '#219ebc',
+    'Low': '#8ecae6',
+    'Lowest': '#a8dadc',
 };
 
 export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {

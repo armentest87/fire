@@ -86,7 +86,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
             datasets: [{
                 label: 'Completed Story Points',
                 data: labels.map(l => velocityBySprint[l]),
-                backgroundColor: 'hsl(var(--primary))',
+                backgroundColor: '#219ebc',
                 barThickness: 20,
             }]
         }
@@ -105,7 +105,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                 {
                     label: 'Ideal Burndown',
                     data: [totalPoints, 0],
-                    borderColor: 'hsl(var(--destructive))',
+                    borderColor: '#fb8500',
                     borderDash: [5, 5],
                     fill: false,
                     tension: 0.1,
@@ -114,8 +114,8 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                 {
                     label: 'Actual Burndown',
                     data,
-                    backgroundColor: 'hsl(var(--primary))',
-                    borderColor: 'hsl(var(--primary))',
+                    backgroundColor: '#219ebc',
+                    borderColor: '#219ebc',
                     fill: false,
                     tension: 0.1,
                     type: 'line' as const

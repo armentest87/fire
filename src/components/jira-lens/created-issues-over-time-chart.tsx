@@ -36,8 +36,8 @@ export function CreatedIssuesOverTimeChart({ issues }: { issues: JiraIssue[] }) 
                 {
                     label: 'Issues Created',
                     data: createdData,
-                    borderColor: 'hsl(var(--primary))',
-                    backgroundColor: 'hsla(var(--primary), 0.2)',
+                    borderColor: '#219ebc',
+                    backgroundColor: 'rgba(33, 158, 188, 0.2)',
                     fill: false,
                     tension: 0.1,
                     pointRadius: 1,

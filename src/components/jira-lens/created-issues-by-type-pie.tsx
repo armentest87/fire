@@ -9,11 +9,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const TYPE_COLORS: Record<string, string> = {
-    'Support': '#5D9CEC',
-    'Bug': '#DA4453',
-    'New Feature': '#8CC152',
-    'Task': '#F6BB42',
-    'Story': '#37BC9B',
+    'Support': '#219ebc',
+    'Bug': '#fb8500',
+    'New Feature': '#8ecae6',
+    'Task': '#ffb703',
+    'Story': '#023047',
 };
 
 export function CreatedIssuesByTypePie({ issues }: { issues: JiraIssue[] }) {

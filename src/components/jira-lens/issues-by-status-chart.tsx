@@ -8,13 +8,14 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, ChartData } from 'chart.
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const STATUS_COLORS: Record<string, string> = {
-    'To Do': '#F28B50',
-    'Done': '#8CC152',
-    'Open': '#F6BB42',
-    'In Progress': '#5D9CEC',
-    'Implementing': '#4A89DC',
-    'Canceled': '#DA4453',
-    // Add other statuses from your data if needed
+    'To Do': '#ffb703',
+    'In Progress': '#219ebc',
+    'Done': '#8ecae6',
+    'Open': '#ffb703',
+    'Implementing': '#219ebc',
+    'Canceled': '#fb8500',
+    'In Review': '#8ecae6',
+    'Backlog': '#023047'
 };
 
 export function IssuesByStatusChart({ issues }: { issues: JiraIssue[] }) {
@@ -26,12 +27,12 @@ export function IssuesByStatusChart({ issues }: { issues: JiraIssue[] }) {
 
     const labels = Object.keys(statusCounts).sort((a,b) => statusCounts[b] - statusCounts[a]);
     const data = labels.map(label => statusCounts[label]);
-    const backgroundColor = labels.map(label => STATUS_COLORS[label] || '#967ADC'); // Default color
+    const backgroundColor = labels.map(label => STATUS_COLORS[label] || '#a8dadc'); // Default color
 
     const statusList = labels.map(label => ({
         label,
         count: statusCounts[label],
-        color: STATUS_COLORS[label] || '#967ADC',
+        color: STATUS_COLORS[label] || '#a8dadc',
     }));
 
     return {

@@ -13,18 +13,18 @@ interface ProjectProgressChartProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-    'To Do': '#F9A825',
-    'In Progress': '#2196F3',
-    'Done': '#4CAF50',
-    'Authorize': '#9C27B0',
-    'Awaiting...': '#FF9800',
-    'Backlog': '#607D8B',
-    'Canceled': '#F44336',
+    'To Do': '#ffb703',
+    'In Progress': '#219ebc',
+    'Done': '#8ecae6',
+    'Authorize': '#a8dadc',
+    'Awaiting...': '#d9ed92',
+    'Backlog': '#023047',
+    'Canceled': '#fb8500',
     'Closed': '#9E9E9E',
-    'Completed': '#4CAF50',
-    'Implementing': '#00BCD4',
-    'Pending': '#FFC107',
-    'Work in progress': '#2196F3'
+    'Completed': '#8ecae6',
+    'Implementing': '#1a759f',
+    'Pending': '#ffb703',
+    'Work in progress': '#219ebc'
 };
 
 
@@ -47,70 +47,19 @@ export function ProjectProgressChart({ issues }: ProjectProgressChartProps) {
             backgroundColor: STATUS_COLORS[status],
             barThickness: 20,
         };
-    }).filter(d => d.data.some(v => v > 0)); // Only include statuses that have data
+    }).filter(d => d.data.some(v => v > 0));
 
-    const statusTotals = labels.map(label => {
-        return Object.values(statusCounts[label]).reduce((sum, val) => sum + val, 0);
-    });
-
-    const toDoTotals = labels.map(label => statusCounts[label]['To Do']);
-    const inProgressTotals = labels.map(label => statusCounts[label]['In Progress']);
-    const doneTotals = labels.map(label => statusCounts[label]['Done']);
+    const statusData = Object.keys(STATUS_COLORS).map(status => {
+      return {
+        label: status,
+        data: [issues.filter(i => i.status === status).length],
+        backgroundColor: STATUS_COLORS[status]
+      }
+    }).filter(d => d.data[0] > 0);
 
     return {
-        labels: ['To Do', 'In Progress', 'Done'],
-        datasets: [
-            {
-                label: 'To Do',
-                data: [issues.filter(i => i.status === 'To Do').length],
-                backgroundColor: '#FFA726'
-            },
-            {
-                label: 'In Progress',
-                data: [issues.filter(i => i.status === 'In Progress').length],
-                backgroundColor: '#42A5F5'
-            },
-            {
-                label: 'Done',
-                data: [issues.filter(i => i.status === 'Done').length],
-                backgroundColor: '#66BB6A'
-            },
-            {
-                label: 'Authorize',
-                data: [issues.filter(i => i.status === 'Authorize').length],
-                backgroundColor: STATUS_COLORS['Authorize']
-            },
-             {
-                label: 'Awaiting...',
-                data: [issues.filter(i => i.status === 'Awaiting...').length],
-                backgroundColor: STATUS_COLORS['Awaiting...']
-            },
-             {
-                label: 'Backlog',
-                data: [issues.filter(i => i.status === 'Backlog').length],
-                backgroundColor: STATUS_COLORS['Backlog']
-            },
-            {
-                label: 'Canceled',
-                data: [issues.filter(i => i.status === 'Canceled').length],
-                backgroundColor: STATUS_COLORS['Canceled']
-            },
-             {
-                label: 'Closed',
-                data: [issues.filter(i => i.status === 'Closed').length],
-                backgroundColor: STATUS_COLORS['Closed']
-            },
-             {
-                label: 'Completed',
-                data: [issues.filter(i => i.status === 'Completed').length],
-                backgroundColor: STATUS_COLORS['Completed']
-            },
-             {
-                label: 'Implementing',
-                data: [issues.filter(i => i.status === 'Implementing').length],
-                backgroundColor: STATUS_COLORS['Implementing']
-            }
-        ]
+        labels: ['Issues'],
+        datasets: statusData
     };
   }, [issues]);
 

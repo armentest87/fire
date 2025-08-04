@@ -9,12 +9,19 @@ import { eachMonthOfInterval, format, parseISO, startOfMonth, endOfDay } from 'd
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 const TYPE_COLORS: Record<string, string> = {
-    'Support': 'hsl(var(--primary))',
-    'Bug': 'hsl(var(--destructive))',
-    'New Feature': '#8CC152',
-    'Task': '#F6BB42',
-    'Story': '#37BC9B',
-    'Epic': '#967ADC'
+    'Support': '#219ebc',
+    'Bug': '#fb8500',
+    'New Feature': '#8ecae6',
+    'Task': '#ffb703',
+    'Story': '#023047',
+    'Epic': '#a8dadc'
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
 export function CreatedIssuesByTypeOverTimeChart({ issues }: { issues: JiraIssue[] }) {
@@ -46,11 +53,12 @@ export function CreatedIssuesByTypeOverTimeChart({ issues }: { issues: JiraIssue
 
         const datasets = issueTypes.map((type, index) => {
             const data = monthLabels.map(label => monthlyTypedCounts[type][label] || 0);
+            const color = TYPE_COLORS[type] || `#${Math.floor(Math.random()*16777215).toString(16)}`;
             return {
                 label: type,
                 data,
-                borderColor: TYPE_COLORS[type] || `hsl(${220 + index * 40}, 70%, 60%)`,
-                backgroundColor: (TYPE_COLORS[type] || `hsl(${220 + index * 40}, 70%, 60%)`).replace(')', ', 0.2)').replace('hsl', 'hsla'),
+                borderColor: color,
+                backgroundColor: hexToRgba(color, 0.2),
                 fill: false,
                 tension: 0.1,
                 pointRadius: 2,

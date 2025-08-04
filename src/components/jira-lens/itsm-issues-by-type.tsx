@@ -9,11 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const TYPE_COLORS: Record<string, string> = {
-    'Support': '#5D9CEC',
-    'Bug': '#DA4453',
-    'New Feature': '#8CC152',
-    'Task': '#F6BB42',
-    'Story': '#37BC9B',
+    'Support': '#219ebc',
+    'Bug': '#fb8500',
+    'New Feature': '#8ecae6',
+    'Task': '#ffb703',
+    'Story': '#023047',
 };
 
 export function ItsmIssuesByType({ issues }: { issues: JiraIssue[] }) {
@@ -27,7 +27,7 @@ export function ItsmIssuesByType({ issues }: { issues: JiraIssue[] }) {
     const total = issues.length;
     const labels = Object.keys(typeCounts).sort((a,b) => typeCounts[b] - typeCounts[a]);
     const data = labels.map(label => typeCounts[label]);
-    const backgroundColor = labels.map(label => TYPE_COLORS[label] || '#9E9E9E');
+    const backgroundColor = labels.map(label => TYPE_COLORS[label] || '#a8dadc');
 
     const typeList = labels.map(label => ({
         label,

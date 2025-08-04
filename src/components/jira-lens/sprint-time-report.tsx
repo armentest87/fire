@@ -44,8 +44,8 @@ const EstimatePercentageChart = ({ issues }: { issues: JiraIssue[] }) => {
             datasets: [{
                 label: '% Remaining',
                 data: data.map(d => d.percentage),
-                backgroundColor: 'hsl(var(--primary))',
-                borderColor: 'hsl(var(--primary))',
+                backgroundColor: '#219ebc',
+                borderColor: '#219ebc',
                 barThickness: 10,
             }]
         };
@@ -75,7 +75,7 @@ const EstimateComparisonChart = ({ issues }: { issues: JiraIssue[] }) => {
                 {
                     label: 'Original Estimate',
                     data: data.map(d => d.time_original_estimate_hours),
-                    backgroundColor: 'hsl(var(--secondary))',
+                    backgroundColor: '#8ecae6',
                 },
                 {
                     label: 'Remaining Estimate',
@@ -83,7 +83,7 @@ const EstimateComparisonChart = ({ issues }: { issues: JiraIssue[] }) => {
                         const original = d.time_original_estimate_hours || 0;
                         return d.time_spent_hours ? Math.max(0, original - d.time_spent_hours) : original;
                     }),
-                    backgroundColor: 'hsl(var(--primary))',
+                    backgroundColor: '#023047',
                 }
             ]
         };

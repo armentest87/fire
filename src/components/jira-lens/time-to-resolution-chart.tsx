@@ -56,13 +56,13 @@ export function TimeToResolutionChart({ issues }: { issues: JiraIssue[] }) {
         {
           label: 'Actual Hours',
           data: actualData,
-          backgroundColor: 'hsl(var(--destructive))',
+          backgroundColor: '#fb8500',
           barThickness: 15,
         },
         {
           label: 'Target Hours',
           data: targetData,
-          backgroundColor: 'hsl(var(--primary))',
+          backgroundColor: '#219ebc',
           barThickness: 15,
         }
       ],
