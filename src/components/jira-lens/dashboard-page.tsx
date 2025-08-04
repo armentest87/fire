@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { type JiraIssue, type JiraCredentials } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Filter, Loader2, Settings, BarChart } from 'lucide-react';
+import { LogOut, Filter, Loader2 } from 'lucide-react';
 import { fetchJiraData } from '@/lib/dummy-data';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
@@ -67,6 +67,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   }, [allIssues]);
 
   const CurrentTabComponent = DashboardTabs.components.find(c => c.value === activeTab)?.component;
+  const currentTabInfo = DashboardTabs.components.find(c => c.value === activeTab);
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
@@ -75,11 +76,11 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       <div className="flex flex-col flex-1">
         <header className="flex items-center justify-between gap-4 py-4 px-6 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">
-                {DashboardTabs.components.find(c => c.value === activeTab)?.label}
+            <h1 className="text-xl md:text-2xl font-bold text-primary">
+                {currentTabInfo?.label}
             </h1>
             <p className="text-sm text-muted-foreground">
-                {DashboardTabs.components.find(c => c.value === activeTab)?.description}
+                {currentTabInfo?.description}
             </p>
           </div>
           

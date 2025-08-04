@@ -8,7 +8,6 @@ import { CumulativeFlowDiagram } from "./cumulative-flow-diagram";
 import { ServiceManagement } from "./service-management";
 import { ItsmIssuesCreatedReport } from "./itsm-issues-created-report";
 import { ReleasesReport } from "./releases-report";
-import { useState } from "react";
 import { LayoutDashboard, GanttChartSquare, Clock, Hourglass, AreaChart, Server, Activity, GitMerge, BarChart } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -39,10 +38,10 @@ const NoIssuesPlaceholder = () => (
 
 export function DashboardTabs({ activeTab, setActiveTab }: DashboardTabsProps) {
     return (
-        <aside className="w-64 flex flex-col p-4 border-r bg-card/20">
-            <div className="flex items-center gap-2 mb-8">
-                <BarChart className="h-8 w-8 text-primary-foreground bg-primary p-1.5 rounded-lg" />
-                <h1 className="text-2xl font-bold">Jira Lens</h1>
+        <aside className="w-64 flex flex-col p-4 border-r bg-card/50">
+            <div className="flex items-center gap-3 mb-8 px-2">
+                <BarChart className="h-8 w-8 text-primary" />
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent text-transparent bg-clip-text">Jira Lens</h1>
             </div>
             <nav className="flex flex-col gap-2">
                 {tabsConfig.map(tab => (
@@ -50,12 +49,19 @@ export function DashboardTabs({ activeTab, setActiveTab }: DashboardTabsProps) {
                         key={tab.value}
                         onClick={() => setActiveTab(tab.value)}
                         className={cn(
-                            "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all",
-                            "hover:bg-primary/80 hover:text-primary-foreground",
-                            activeTab === tab.value ? "text-primary-foreground bg-primary shadow-md" : "text-muted-foreground"
+                            "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all group",
+                            "hover:bg-primary/10",
+                            activeTab === tab.value ? "bg-primary/10 text-primary" : "text-muted-foreground"
                         )}
                     >
-                        <tab.icon className="h-5 w-5" />
+                        <div className={cn(
+                            "absolute left-0 h-6 w-1 rounded-r-lg bg-transparent transition-all",
+                            activeTab === tab.value && "bg-primary"
+                        )}></div>
+                        <tab.icon className={cn(
+                            "h-5 w-5 transition-colors",
+                             activeTab === tab.value ? "text-primary" : "group-hover:text-foreground"
+                            )} />
                         <span>{tab.label}</span>
                     </button>
                 ))}
