@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { type JiraIssue, type JiraCredentials } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Filter, Loader2 } from 'lucide-react';
+import { LogOut, Filter, Loader2, Settings, BarChart } from 'lucide-react';
 import { fetchJiraData } from '@/lib/dummy-data';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
@@ -18,7 +18,7 @@ interface DashboardPageProps {
 
 const WelcomePlaceholder = () => (
     <div className="flex items-center justify-center h-full">
-      <div className="text-center p-8 bg-card rounded-lg shadow-md border">
+      <div className="text-center p-8 bg-card rounded-lg shadow-sm border">
         <h2 className="text-2xl font-semibold mb-2">Welcome to Jira Lens</h2>
         <p className="text-muted-foreground">Click the "Fetch Data" button to load your project data and begin your analysis.</p>
       </div>
@@ -37,7 +37,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     setAllIssues(null);
     setFilteredIssues(null);
     try {
-      const data = await fetchJiraData(jql); 
+      const data = await fetchJiraData(jql);
       setAllIssues(data);
       setFilteredIssues(data);
       toast({
@@ -55,7 +55,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       setIsFetchDialogOpen(false);
     }
   };
-  
+
   const uniqueFilterOptions = useMemo(() => {
     if (!allIssues) return { assignees: [], statuses: [], issueTypes: [], priorities: [] };
     const assignees = [...new Set(allIssues.map(i => i.assignee).filter(Boolean))].sort();
@@ -67,60 +67,74 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
 
   return (
-    <div className="flex flex-col h-screen w-full bg-background">
-      <header className="flex items-center gap-4 py-3 px-4 sm:px-6 border-b sticky top-0 bg-background z-10">
-        <h1 className="text-xl md:text-2xl font-bold flex-1 truncate">
-          Jira Lens
-        </h1>
-        
-        <div className="flex items-center gap-2 ml-auto">
-          {allIssues && (
-            <JiraFilterPopover
-              allIssues={allIssues}
-              onFilterChange={setFilteredIssues}
-              assignees={uniqueFilterOptions.assignees}
-              statuses={uniqueFilterOptions.statuses}
-              issueTypes={uniqueFilterOptions.issueTypes}
-              priorities={uniqueFilterOptions.priorities}
-            />
-          )}
+    <div className="flex h-screen w-full bg-background text-foreground">
+      <DashboardTabs issues={filteredIssues} />
 
-          <Button onClick={() => setIsFetchDialogOpen(true)} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Fetching...
-              </>
-            ) : (
-               'Fetch Data'
+      <div className="flex flex-col flex-1">
+        <header className="flex items-center justify-between gap-4 py-4 px-6 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">
+              Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground">High-level project overview and metrics.</p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {allIssues && (
+              <JiraFilterPopover
+                allIssues={allIssues}
+                onFilterChange={setFilteredIssues}
+                assignees={uniqueFilterOptions.assignees}
+                statuses={uniqueFilterOptions.statuses}
+                issueTypes={uniqueFilterOptions.issueTypes}
+                priorities={uniqueFilterOptions.priorities}
+              />
             )}
-          </Button>
 
-          <FetchDataDialog
-            isOpen={isFetchDialogOpen}
-            onOpenChange={setIsFetchDialogOpen}
-            onFetch={handleFetch}
-            isFetching={isLoading}
-           />
+            <Button onClick={() => setIsFetchDialogOpen(true)} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Fetching...
+                </>
+              ) : (
+                'Fetch Data'
+              )}
+            </Button>
 
-          <Button variant="ghost" onClick={onLogout}>
-            <LogOut className="mr-2 h-5 w-5" />
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
-        </div>
-      </header>
+            <FetchDataDialog
+              isOpen={isFetchDialogOpen}
+              onOpenChange={setIsFetchDialogOpen}
+              onFetch={handleFetch}
+              isFetching={isLoading}
+            />
 
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {!allIssues && !isLoading && <WelcomePlaceholder />}
-          {isLoading && (
-               <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <p className="text-lg text-muted-foreground">Loading project data...</p>
+            <Button variant="ghost" size="icon" onClick={onLogout}>
+              <LogOut className="h-5 w-5" />
+               <span className="sr-only">Logout</span>
+            </Button>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+            {!allIssues && !isLoading && <WelcomePlaceholder />}
+            {isLoading && (
+                <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <p className="text-lg text-muted-foreground">Loading project data...</p>
+                    </div>
+                </div>
+            )}
+            {filteredIssues && (
+                <div className="animate-fade-in">
+                  <div className="mt-4">
+                    <DashboardTabs.Content />
                   </div>
-              </div>
-          )}
-          {filteredIssues && <DashboardTabs issues={filteredIssues} />}
-      </main>
+                </div>
+              )
+            }
+        </main>
+      </div>
     </div>
   );
 }
