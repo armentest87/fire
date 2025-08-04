@@ -5,7 +5,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { UserWorkloadReport } from "./user-workload-report";
 import { HoursByUserChart } from "./hours-by-user-chart";
 import { WorktimeByDateChart } from "./worktime-by-date-chart";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table";
@@ -27,7 +26,7 @@ const KpiCard = ({ title, value, description }: { title: string, value: string, 
 const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
     const {daysInMonth, userDailyHours, totals} = useMemo(() => {
         if (issues.length === 0) {
-            return {daysInMonth: [], userDailyHours: [], totals: []};
+            return {daysInMonth: [], userDailyHours: [], totals: {hours: [], total: 0}};
         }
 
         const latestDate = issues.reduce((max, i) => {
@@ -59,20 +58,22 @@ const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
             return { user, hours, total };
         }).sort((a,b) => b.total - a.total);
 
-        const totals = daysInMonth.map((day, i) => {
+        const dailyTotals = daysInMonth.map((day, i) => {
             return userDailyHours.reduce((sum, userRow) => sum + userRow.hours[i], 0);
         });
+        const grandTotal = dailyTotals.reduce((sum, h) => sum + h, 0);
 
-        return {daysInMonth, userDailyHours, totals};
+
+        return {daysInMonth, userDailyHours, totals: {hours: dailyTotals, total: grandTotal}};
 
     }, [issues]);
 
     const formatHours = (h: number) => {
         if (h === 0) return '-';
-        return h.toFixed(2);
+        return h.toFixed(1);
     }
 
-    if (issues.length === 0) {
+    if (issues.length === 0 || userDailyHours.length === 0) {
         return (
              <Card>
                 <CardHeader>
@@ -81,7 +82,7 @@ const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
                 </CardHeader>
                 <CardContent>
                     <div className="text-muted-foreground h-48 flex items-center justify-center rounded-lg bg-muted/20 border border-dashed">
-                        <p>No time tracking data available.</p>
+                        <p>No time tracking data available to display.</p>
                     </div>
                 </CardContent>
             </Card>
@@ -100,31 +101,31 @@ const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
                 <Table className="min-w-full">
                     <TableHeader>
                         <TableRow className="bg-muted/50">
-                            <TableHead className="sticky left-0 bg-muted/50 font-semibold w-48">User</TableHead>
+                            <TableHead className="sticky left-0 bg-muted/50 font-semibold w-48 z-10">User</TableHead>
                             {daysInMonth.map(day => (
                                 <TableHead key={day.toISOString()} className="text-center w-20">
                                     <div className="text-xs text-muted-foreground">{format(day, 'eee')}</div>
                                     <div>{getDate(day)}</div>
                                 </TableHead>
                             ))}
-                            <TableHead className="text-right font-semibold w-24">Total</TableHead>
+                            <TableHead className="text-right font-semibold w-24 sticky right-0 bg-muted/50 z-10">Total</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow className="font-semibold bg-muted/20">
-                            <TableCell className="sticky left-0 bg-muted/20">Total</TableCell>
-                            {totals.map((total, i) => (
+                        <TableRow className="font-semibold bg-muted/20 hover:bg-muted/30">
+                            <TableCell className="sticky left-0 bg-muted/20 z-10">Total</TableCell>
+                            {totals.hours.map((total, i) => (
                                 <TableCell key={i} className="text-center">{formatHours(total)}</TableCell>
                             ))}
-                             <TableCell className="text-right">{formatHours(totals.reduce((sum, h) => sum + h, 0))}</TableCell>
+                             <TableCell className="text-right sticky right-0 bg-muted/20 z-10">{formatHours(totals.total)}</TableCell>
                         </TableRow>
                         {userDailyHours.map(({ user, hours, total }) => (
                             <TableRow key={user}>
-                                <TableCell className="sticky left-0 bg-background font-medium">{user}</TableCell>
+                                <TableCell className="sticky left-0 bg-background font-medium z-10">{user}</TableCell>
                                 {hours.map((h, i) => (
-                                    <TableCell key={i} className="text-center text-xs">{formatHours(h)}</TableCell>
+                                    <TableCell key={i} className={`text-center text-xs ${h > 0 ? 'font-medium' : 'text-muted-foreground'}`}>{formatHours(h)}</TableCell>
                                 ))}
-                                <TableCell className="text-right font-medium">{formatHours(total)}</TableCell>
+                                <TableCell className="text-right font-medium sticky right-0 bg-background z-10">{formatHours(total)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -175,7 +176,7 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
 
     return (
        <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 
                 {/* Filters & KPIs Column */}
                 <div className="lg:col-span-1 space-y-6">
@@ -212,13 +213,12 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
                 </div>
                 
                 {/* Main Content Column */}
-                <div className="lg:col-span-5 space-y-6">
+                <div className="lg:col-span-4 space-y-6">
                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                        <HoursByUserChart issues={issues} />
                        <WorktimeByDateChart issues={issues} />
                    </div>
                     <TimeworkMatrixTable issues={issues} />
-                    <UserWorkloadReport issues={issues} />
                 </div>
 
             </div>

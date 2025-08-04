@@ -2,23 +2,29 @@
 import { type JiraIssue } from "@/lib/types";
 import { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Info } from "lucide-react";
+import { UserWorkloadReport } from "./user-workload-report";
+import { OpenIssuesReport } from "./open-issues-report";
+import { IssuesByPriorityChart } from "./issues-by-priority-chart";
+import { IssuesByTypeChart } from "./issues-by-type-chart";
+import { IssuesByStatusChart } from "./issues-by-status-chart";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
-const kpiCard = (title: string, value: any) => (
+const KpiCard = ({ title, value, description }: { title: string; value: string | number; description?: string }) => (
     <Card className="shadow-sm">
         <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">{title}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent>
             <p className="text-2xl font-bold">{value}</p>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </CardContent>
     </Card>
-)
+);
 
 export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
     const sprints = useMemo(() => {
@@ -26,34 +32,53 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
         issues.forEach(issue => {
             issue.sprint_names?.forEach(sprint => sprintSet.add(sprint));
         });
-        return Array.from(sprintSet);
+        // Sort sprints, assuming a "Sprint X" format
+        return Array.from(sprintSet).sort((a, b) => {
+            const aNum = parseInt(a.split(' ')[1] || '0');
+            const bNum = parseInt(b.split(' ')[1] || '0');
+            return aNum - bNum;
+        });
     }, [issues]);
 
-    const [selectedSprint, setSelectedSprint] = useState<string | null>(sprints.length > 0 ? sprints[0] : null);
+    const [selectedSprint, setSelectedSprint] = useState<string | null>(sprints.length > 0 ? sprints[sprints.length-1] : null);
+
+    const sprintIssues = useMemo(() => {
+        if (!selectedSprint) return [];
+        return issues.filter(issue => issue.sprint_names?.includes(selectedSprint));
+    }, [selectedSprint, issues]);
+
 
     const sprintData = useMemo(() => {
-        if (!selectedSprint) return null;
+        if (!selectedSprint || sprintIssues.length === 0) return null;
         
-        const sprintIssues = issues.filter(issue => issue.sprint_names?.includes(selectedSprint));
         const committedStoryPoints = sprintIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
         const completedIssues = sprintIssues.filter(i => i.status_category === 'Done');
         const completedStoryPoints = completedIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
+
+        const originalEstimate = sprintIssues.reduce((sum, i) => sum + (i.time_original_estimate_hours || 0), 0);
+        const remainingEstimate = sprintIssues.reduce((sum, i) => {
+             const remaining = i.time_spent_hours ? Math.max(0, (i.time_original_estimate_hours || 0) - i.time_spent_hours) : (i.time_original_estimate_hours || 0);
+             return sum + remaining;
+        }, 0);
+
 
         return {
             totalIssues: sprintIssues.length,
             completedIssues: completedIssues.length,
             committedStoryPoints,
             completedStoryPoints,
-            issues: sprintIssues,
+            originalEstimate: `${originalEstimate.toFixed(0)}h`,
+            remainingEstimate: `${remainingEstimate.toFixed(1)}h`,
+            percentComplete: originalEstimate > 0 ? ((originalEstimate - remainingEstimate) / originalEstimate * 100).toFixed(1) : 0
         };
-    }, [selectedSprint, issues]);
+    }, [selectedSprint, sprintIssues]);
 
 
     const historicalVelocityData = useMemo(() => {
         const velocityBySprint: Record<string, number> = {};
         sprints.forEach(sprint => {
-            const sprintIssues = issues.filter(issue => issue.sprint_names?.includes(sprint) && issue.status_category === 'Done');
-            velocityBySprint[sprint] = sprintIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
+            const aSprintIssues = issues.filter(issue => issue.sprint_names?.includes(sprint) && issue.status_category === 'Done');
+            velocityBySprint[sprint] = aSprintIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
         });
         const labels = Object.keys(velocityBySprint);
         return {
@@ -61,7 +86,8 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
             datasets: [{
                 label: 'Completed Story Points',
                 data: labels.map(l => velocityBySprint[l]),
-                backgroundColor: '#3B82F6',
+                backgroundColor: 'hsl(var(--primary))',
+                barThickness: 20,
             }]
         }
     }, [issues, sprints]);
@@ -79,7 +105,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                 {
                     label: 'Ideal Burndown',
                     data: [totalPoints, 0],
-                    borderColor: '#F97066',
+                    borderColor: 'hsl(var(--destructive))',
                     borderDash: [5, 5],
                     fill: false,
                     tension: 0.1,
@@ -88,8 +114,8 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                 {
                     label: 'Actual Burndown',
                     data,
-                    backgroundColor: '#3B82F6',
-                    borderColor: '#3B82F6',
+                    backgroundColor: 'hsl(var(--primary))',
+                    borderColor: 'hsl(var(--primary))',
                     fill: false,
                     tension: 0.1,
                     type: 'line' as const
@@ -112,47 +138,75 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
 
     return (
         <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Historical Sprint Velocity</CardTitle>
-                    <Info className="h-4 w-4 text-gray-400" />
-                </CardHeader>
-                <CardContent className="h-64">
-                    <Bar data={historicalVelocityData} options={{ maintainAspectRatio: false, scales: {y: {beginAtZero: true}} }} />
-                </CardContent>
-            </Card>
-
-            <div className="space-y-2">
-                <label className="font-semibold">Select Sprint for Detailed Analysis</label>
-                <Select onValueChange={setSelectedSprint} defaultValue={selectedSprint || undefined}>
-                    <SelectTrigger><SelectValue placeholder="Select a sprint" /></SelectTrigger>
-                    <SelectContent>
-                        {sprints.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                </Select>
+            <div className="flex flex-col md:flex-row gap-4 justify-between md:items-center">
+                 <h2 className="text-xl font-bold">Sprint Analysis</h2>
+                <div className="flex gap-4">
+                     <Select value={selectedSprint || undefined} onValueChange={setSelectedSprint}>
+                        <SelectTrigger className="w-48"><SelectValue placeholder="Select a sprint" /></SelectTrigger>
+                        <SelectContent>
+                            {sprints.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    {/* Placeholder for Sprint State filter */}
+                    <Select defaultValue="active">
+                        <SelectTrigger className="w-48"><SelectValue placeholder="Sprint State" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="active">Active Sprints</SelectItem>
+                            <SelectItem value="completed">Completed Sprints</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
-            
-            {selectedSprint && sprintData && (
+           
+            {selectedSprint && sprintData ? (
                 <div className="space-y-6">
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {kpiCard('Committed SPs', sprintData.committedStoryPoints)}
-                        {kpiCard('Completed SPs', sprintData.completedStoryPoints)}
-                        {kpiCard('Total Issues', sprintData.totalIssues)}
-                        {kpiCard('Completed Issues', sprintData.completedIssues)}
+                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                        <KpiCard title="Start Date" value="02.08.2023" />
+                        <KpiCard title="End Date" value="17.08.2023" />
+                        <KpiCard title="Sprint Duration" value="15 days" />
+                        <KpiCard title="Overdue" value="1 day" />
+                        <KpiCard title="Original Estimate" value={sprintData.originalEstimate} />
+                        <KpiCard title="Remaining Estimate" value={sprintData.remainingEstimate} description={`${sprintData.percentComplete}% complete`} />
                     </div>
-                    
-                    {burndownData && (
-                        <Card>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                         <Card>
                             <CardHeader>
-                                <CardTitle>Sprint Burndown Chart</CardTitle>
-                                 <Info className="h-4 w-4 text-gray-400" />
+                                <CardTitle>Historical Sprint Velocity</CardTitle>
+                                <CardDescription>Completed story points from previous sprints.</CardDescription>
                             </CardHeader>
                             <CardContent className="h-72">
-                                <Line data={burndownData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }} />
+                                <Bar data={historicalVelocityData} options={{ maintainAspectRatio: false, scales: {y: {beginAtZero: true, title: {display: true, text: 'Story Points'}}} }} />
                             </CardContent>
                         </Card>
-                    )}
+                        {burndownData && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Sprint Burndown Chart</CardTitle>
+                                     <CardDescription>Ideal vs. actual burndown of story points.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="h-72">
+                                    <Line data={burndownData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: {display: true, text: 'Story Points Remaining'}}} }} />
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <IssuesByStatusChart issues={sprintIssues} />
+                        <IssuesByTypeChart issues={sprintIssues} />
+                        <IssuesByPriorityChart issues={sprintIssues} />
+                    </div>
+                    
+                    <div className="space-y-6">
+                        <UserWorkloadReport issues={sprintIssues} />
+                        <OpenIssuesReport issues={sprintIssues} />
+                    </div>
                 </div>
+            ) : (
+                 <div className="text-center p-8">
+                    <p className="text-muted-foreground">Select a sprint to see the detailed analysis.</p>
+                 </div>
             )}
         </div>
     )
