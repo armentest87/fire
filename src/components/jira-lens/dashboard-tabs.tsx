@@ -8,6 +8,7 @@ import { SprintTimeReport } from "./sprint-time-report";
 import { CumulativeFlowDiagram } from "./cumulative-flow-diagram";
 import { ServiceManagement } from "./service-management";
 import { ItsmIssuesCreatedReport } from "./itsm-issues-created-report";
+import { ReleasesReport } from "./releases-report";
 
 
 export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
@@ -32,6 +33,7 @@ export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
                 <TabsTrigger value="timework-report">Timework Report</TabsTrigger>
                 <TabsTrigger value="service-management">Service Management</TabsTrigger>
                 <TabsTrigger value="itsm-report">ITSM Report</TabsTrigger>
+                <TabsTrigger value="releases-report">Releases Report</TabsTrigger>
             </TabsList>
             <TabsContent value="overview" className="flex-1">
                  <Overview issues={issues} />
@@ -53,6 +55,9 @@ export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
             </TabsContent>
             <TabsContent value="itsm-report" className="flex-1">
                 <ItsmIssuesCreatedReport issues={issues} />
+            </TabsContent>
+            <TabsContent value="releases-report" className="flex-1">
+                <ReleasesReport issues={issues} />
             </TabsContent>
         </Tabs>
     );
