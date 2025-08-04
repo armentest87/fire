@@ -5,11 +5,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
+import { UserWorkloadReport } from "./user-workload-report";
+import { OpenIssuesReport } from "./open-issues-report";
 
 const KpiCard = ({ title, value, description }: { title: string, value: string, description?: string }) => (
     <Card className="shadow-sm">
@@ -29,7 +26,7 @@ const UsersChart = () => (
             <CardTitle>Users</CardTitle>
         </CardHeader>
         <CardContent className="h-64">
-             <p className="text-muted-foreground h-full flex items-center justify-center">User chart placeholder</p>
+             <p className="text-muted-foreground h-full flex items-center justify-center">User worktime bar chart placeholder</p>
         </CardContent>
     </Card>
 );
@@ -40,7 +37,7 @@ const WorktimeChart = () => (
             <CardTitle>Worktime</CardTitle>
         </CardHeader>
         <CardContent className="h-64">
-           <p className="text-muted-foreground h-full flex items-center justify-center">Worktime chart placeholder</p>
+           <p className="text-muted-foreground h-full flex items-center justify-center">Worktime by date bar chart placeholder</p>
         </CardContent>
     </Card>
 );
@@ -49,6 +46,7 @@ const TimeworkMatrixTable = () => (
      <Card>
         <CardHeader>
             <CardTitle>User Timework Report</CardTitle>
+            <CardDescription>Detailed time breakdown per user per day.</CardDescription>
         </CardHeader>
         <CardContent>
             <div className="overflow-x-auto">
@@ -77,8 +75,12 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
     
     const kpis = useMemo(() => {
         const totalHours = issues.reduce((sum, issue) => sum + (issue.time_spent_hours || 0), 0);
-        const uniqueDays = new Set(issues.map(i => i.updated.split('T')[0])).size;
-        const averageHours = uniqueDays > 0 ? totalHours / uniqueDays : 0;
+        
+        const uniqueDaysWithTime = new Set(
+            issues.filter(i => (i.time_spent_hours || 0) > 0).map(i => i.updated.split('T')[0])
+        ).size;
+
+        const averageHours = uniqueDaysWithTime > 0 ? totalHours / uniqueDaysWithTime : 0;
         
         const formatHours = (h: number) => {
             const hours = Math.floor(h);
@@ -93,10 +95,11 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
     }, [issues]);
 
     return (
-       <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {/* Filters Column */}
-                <div className="md:col-span-1 lg:col-span-1 space-y-4">
+       <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+                
+                {/* Filters & KPIs Column */}
+                <div className="lg:col-span-1 space-y-6">
                     <Card>
                         <CardHeader><CardTitle className="text-base">Choose Project</CardTitle></CardHeader>
                         <CardContent>
@@ -110,21 +113,6 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
                             </Select>
                         </CardContent>
                     </Card>
-                    <KpiCard title="Total Hours Worked" value={kpis.totalHoursWorked}/>
-                    <KpiCard title="Average Hours per Day" value={kpis.averageHoursPerDay} />
-                </div>
-                
-                {/* Charts Column */}
-                <div className="md:col-span-3 lg:col-span-4 space-y-4">
-                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                       <UsersChart />
-                       <WorktimeChart />
-                   </div>
-                    <TimeworkMatrixTable />
-                </div>
-
-                {/* Period Column */}
-                <div className="md:col-span-4 lg:col-span-1">
                     <Card>
                         <CardHeader><CardTitle className="text-base">Period</CardTitle></CardHeader>
                         <CardContent className="space-y-2">
@@ -140,7 +128,21 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
                            ))}
                         </CardContent>
                     </Card>
+                     <KpiCard title="Total Hours Worked" value={kpis.totalHoursWorked}/>
+                    <KpiCard title="Average Hours per Day" value={kpis.averageHoursPerDay} />
                 </div>
+                
+                {/* Main Content Column */}
+                <div className="lg:col-span-5 space-y-6">
+                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                       <UsersChart />
+                       <WorktimeChart />
+                   </div>
+                    <TimeworkMatrixTable />
+                    <UserWorkloadReport issues={issues} />
+                    <OpenIssuesReport issues={issues} />
+                </div>
+
             </div>
         </div>
     );
