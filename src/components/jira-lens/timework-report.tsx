@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { UserWorkloadReport } from "./user-workload-report";
 import { HoursByUserChart } from "./hours-by-user-chart";
 import { WorktimeByDateChart } from "./worktime-by-date-chart";
+import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table";
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDate } from 'date-fns';
 
 
 const KpiCard = ({ title, value, description }: { title: string, value: string, description?: string }) => (
@@ -22,26 +24,121 @@ const KpiCard = ({ title, value, description }: { title: string, value: string, 
     </Card>
 );
 
-const TimeworkMatrixTable = () => (
+const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
+    const {daysInMonth, userDailyHours, totals} = useMemo(() => {
+        if (issues.length === 0) {
+            return {daysInMonth: [], userDailyHours: [], totals: []};
+        }
+
+        const latestDate = issues.reduce((max, i) => {
+            const updated = parseISO(i.updated);
+            return updated > max ? updated : max;
+        }, parseISO(issues[0].updated));
+
+        const monthStart = startOfMonth(latestDate);
+        const monthEnd = endOfMonth(latestDate);
+        const daysInMonth = eachDayOfInterval({start: monthStart, end: monthEnd});
+
+        const dailyHoursMap: Record<string, Record<string, number>> = {};
+
+        issues.forEach(issue => {
+            if (issue.time_spent_hours && issue.assignee) {
+                const updatedDate = format(parseISO(issue.updated), 'yyyy-MM-dd');
+                const user = issue.assignee;
+                
+                if (!dailyHoursMap[user]) {
+                    dailyHoursMap[user] = {};
+                }
+                dailyHoursMap[user][updatedDate] = (dailyHoursMap[user][updatedDate] || 0) + issue.time_spent_hours;
+            }
+        });
+        
+        const userDailyHours = Object.entries(dailyHoursMap).map(([user, dailyData]) => {
+            const hours = daysInMonth.map(day => dailyData[format(day, 'yyyy-MM-dd')] || 0);
+            const total = hours.reduce((sum, h) => sum + h, 0);
+            return { user, hours, total };
+        }).sort((a,b) => b.total - a.total);
+
+        const totals = daysInMonth.map((day, i) => {
+            return userDailyHours.reduce((sum, userRow) => sum + userRow.hours[i], 0);
+        });
+
+        return {daysInMonth, userDailyHours, totals};
+
+    }, [issues]);
+
+    const formatHours = (h: number) => {
+        if (h === 0) return '-';
+        return h.toFixed(2);
+    }
+
+    if (issues.length === 0) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle>User Timework Report</CardTitle>
+                    <CardDescription>Detailed time breakdown per user per day.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-muted-foreground h-48 flex items-center justify-center rounded-lg bg-muted/20 border border-dashed">
+                        <p>No time tracking data available.</p>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+
+    return (
      <Card>
         <CardHeader>
             <CardTitle>User Timework Report</CardTitle>
-            <CardDescription>Detailed time breakdown per user per day.</CardDescription>
+            <CardDescription>Detailed time breakdown for {daysInMonth.length > 0 ? format(daysInMonth[0], 'MMMM yyyy') : 'the selected period'}.</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="overflow-x-auto">
-                 <div className="text-muted-foreground h-48 flex items-center justify-center rounded-lg bg-muted/20 border border-dashed">
-                    <p>Hierarchical time-tracking table</p>
-                </div>
+            <div className="overflow-x-auto border rounded-lg">
+                <Table className="min-w-full">
+                    <TableHeader>
+                        <TableRow className="bg-muted/50">
+                            <TableHead className="sticky left-0 bg-muted/50 font-semibold w-48">User</TableHead>
+                            {daysInMonth.map(day => (
+                                <TableHead key={day.toISOString()} className="text-center w-20">
+                                    <div className="text-xs text-muted-foreground">{format(day, 'eee')}</div>
+                                    <div>{getDate(day)}</div>
+                                </TableHead>
+                            ))}
+                            <TableHead className="text-right font-semibold w-24">Total</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow className="font-semibold bg-muted/20">
+                            <TableCell className="sticky left-0 bg-muted/20">Total</TableCell>
+                            {totals.map((total, i) => (
+                                <TableCell key={i} className="text-center">{formatHours(total)}</TableCell>
+                            ))}
+                             <TableCell className="text-right">{formatHours(totals.reduce((sum, h) => sum + h, 0))}</TableCell>
+                        </TableRow>
+                        {userDailyHours.map(({ user, hours, total }) => (
+                            <TableRow key={user}>
+                                <TableCell className="sticky left-0 bg-background font-medium">{user}</TableCell>
+                                {hours.map((h, i) => (
+                                    <TableCell key={i} className="text-center text-xs">{formatHours(h)}</TableCell>
+                                ))}
+                                <TableCell className="text-right font-medium">{formatHours(total)}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </div>
         </CardContent>
     </Card>
-)
+    )
+}
 
-const years = ['2023', '2022', '2021', '2020', '2019'];
+const years = ['2024', '2023', '2022', '2021', '2020', '2019'];
 
 export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
-    const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set(['2023']));
+    const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set(['2024','2023']));
 
     const handleYearChange = (year: string) => {
         setSelectedYears(prev => {
@@ -120,7 +217,7 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
                        <HoursByUserChart issues={issues} />
                        <WorktimeByDateChart issues={issues} />
                    </div>
-                    <TimeworkMatrixTable />
+                    <TimeworkMatrixTable issues={issues} />
                     <UserWorkloadReport issues={issues} />
                 </div>
 
