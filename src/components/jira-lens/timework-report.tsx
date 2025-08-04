@@ -25,9 +25,12 @@ const WorktimeChart = () => (
      <Card>
         <CardHeader>
             <CardTitle>Worktime</CardTitle>
+             <CardDescription>Total hours logged per day.</CardDescription>
         </CardHeader>
         <CardContent className="h-64">
-           <p className="text-muted-foreground h-full flex items-center justify-center">Worktime by date bar chart placeholder</p>
+           <div className="text-muted-foreground h-full flex items-center justify-center rounded-lg bg-muted/20 border border-dashed">
+            <p>Worktime by date bar chart</p>
+           </div>
         </CardContent>
     </Card>
 );
@@ -40,7 +43,9 @@ const TimeworkMatrixTable = () => (
         </CardHeader>
         <CardContent>
             <div className="overflow-x-auto">
-                <p className="text-muted-foreground h-48 flex items-center justify-center">Hierarchical time-tracking table placeholder</p>
+                 <div className="text-muted-foreground h-48 flex items-center justify-center rounded-lg bg-muted/20 border border-dashed">
+                    <p>Hierarchical time-tracking table</p>
+                </div>
             </div>
         </CardContent>
     </Card>

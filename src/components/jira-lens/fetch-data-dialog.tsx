@@ -16,9 +16,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Wand2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { visualizationSuggestion } from '@/ai/flows/visualization-suggestion';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 interface FetchDataDialogProps {
   isOpen: boolean;
@@ -39,6 +42,10 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
 
   // State for JQL
   const [jql, setJql] = useState('project = PROJ ORDER BY created DESC');
+
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const { toast } = useToast();
   
   const constructJqlFromBasic = () => {
     const parts: string[] = [];
@@ -63,7 +70,6 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
     return parts.join(' AND ');
   };
 
-
   const handleFetchClick = () => {
     if (activeTab === 'basic') {
       const constructedJql = constructJqlFromBasic();
@@ -73,11 +79,41 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
     }
   };
 
+  const handleSuggest = async () => {
+    setIsSuggesting(true);
+    setSuggestions([]);
+    try {
+        const currentJql = activeTab === 'basic' ? constructJqlFromBasic() : jql;
+        if(!currentJql) {
+            toast({
+                title: "Cannot suggest",
+                description: "Please enter some filter criteria before asking for suggestions.",
+                variant: "destructive",
+            });
+            return;
+        }
+        const result = await visualizationSuggestion({
+            jqlQuery: currentJql,
+            projectType: "Software" // This could be made dynamic in a real app
+        });
+        setSuggestions(result.suggestions);
+    } catch(e) {
+        toast({
+            title: "Suggestion failed",
+            description: "An error occurred while generating suggestions. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSuggesting(false);
+    }
+  };
+
   const isBasicFetchDisabled = !projectKey.trim() && !issueTypes.trim() && !issueStatuses.trim() && !createdDate && !updatedDate;
+  const currentJql = activeTab === 'basic' ? constructJqlFromBasic() : jql;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>Fetch Jira Data</DialogTitle>
           <DialogDescription>
@@ -189,7 +225,27 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
             </div>
           </TabsContent>
         </Tabs>
+         { (isSuggesting || suggestions.length > 0) && (
+            <Alert>
+                <Wand2 className="h-4 w-4" />
+                <AlertTitle>Visualization Suggestions</AlertTitle>
+                <AlertDescription>
+                    {isSuggesting && <p className="text-sm text-muted-foreground">Generating ideas...</p>}
+                    {suggestions.length > 0 && (
+                        <ul className="list-disc space-y-1 pl-5 mt-2 text-sm">
+                            {suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                        </ul>
+                    )}
+                </AlertDescription>
+            </Alert>
+        )}
         <DialogFooter>
+          <div className="flex-1 justify-start">
+             <Button variant="ghost" onClick={handleSuggest} disabled={isSuggesting || !currentJql}>
+               {isSuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Wand2 className="mr-2 h-4 w-4"/>}
+               Suggest Visualizations
+             </Button>
+          </div>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isFetching}>
             Cancel
           </Button>
