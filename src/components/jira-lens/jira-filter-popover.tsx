@@ -13,6 +13,7 @@ import { Filter, X, Calendar as CalendarIcon, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
+import { Checkbox } from '../ui/checkbox';
 
 interface JiraFilterPopoverProps {
     allIssues: JiraIssue[];
@@ -61,7 +62,7 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
             filtered = filtered.filter(issue => filters.issueTypes.has(issue.issuetype));
         }
         if (filters.priorities.size > 0) {
-            filtered = filtered.filter(issue => filters.priorities.has(issue.priority));
+            filtered = filtered.filter(issue => issue.priority && filters.priorities.has(issue.priority));
         }
         if (filters.issueKey) {
             filtered = filtered.filter(issue => issue.key.toLowerCase().includes(filters.issueKey.toLowerCase()));
@@ -105,6 +106,13 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
         }
         return newSet;
     };
+
+    const MultiSelectItem = ({ value, set, onToggle }: { value: string, set: Set<string>, onToggle: (item: string) => void }) => (
+        <div className="flex items-center space-x-2 p-2 cursor-pointer hover:bg-muted/50 rounded-md" onClick={() => onToggle(value)}>
+            <Checkbox id={`filter-${value}`} checked={set.has(value)} onCheckedChange={() => onToggle(value)} />
+            <Label htmlFor={`filter-${value}`} className="font-normal cursor-pointer flex-1">{value}</Label>
+        </div>
+    );
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -163,18 +171,13 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
                             </div>
                             <div className="space-y-2">
                                 <Label>Assignee</Label>
-                                 <Command>
+                                <Command>
                                     <CommandInput placeholder="Filter assignees..." />
                                     <CommandList>
                                         <CommandEmpty>No results found.</CommandEmpty>
                                         <CommandGroup>
                                             {assignees.map(assignee => (
-                                                <CommandItem key={assignee} onSelect={() => setFilters(f => ({ ...f, assignees: toggleSetItem(f.assignees, assignee)}))}>
-                                                     <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.assignees.has(assignee) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                                        <Check className={cn("h-4 w-4")} />
-                                                    </div>
-                                                    {assignee}
-                                                </CommandItem>
+                                                <MultiSelectItem key={assignee} value={assignee} set={filters.assignees} onToggle={(item) => setFilters(f => ({...f, assignees: toggleSetItem(f.assignees, item)}))} />
                                             ))}
                                         </CommandGroup>
                                     </CommandList>
@@ -188,12 +191,7 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
                                         <CommandEmpty>No results found.</CommandEmpty>
                                         <CommandGroup>
                                             {statuses.map(status => (
-                                                <CommandItem key={status} onSelect={() => setFilters(f => ({ ...f, statuses: toggleSetItem(f.statuses, status)}))}>
-                                                    <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.statuses.has(status) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                                        <Check className={cn("h-4 w-4")} />
-                                                    </div>
-                                                    {status}
-                                                </CommandItem>
+                                                <MultiSelectItem key={status} value={status} set={filters.statuses} onToggle={(item) => setFilters(f => ({...f, statuses: toggleSetItem(f.statuses, item)}))} />
                                             ))}
                                         </CommandGroup>
                                     </CommandList>
@@ -207,12 +205,7 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
                                         <CommandEmpty>No results found.</CommandEmpty>
                                         <CommandGroup>
                                             {issueTypes.map(it => (
-                                                <CommandItem key={it} onSelect={() => setFilters(f => ({ ...f, issueTypes: toggleSetItem(f.issueTypes, it)}))}>
-                                                     <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.issueTypes.has(it) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                                        <Check className={cn("h-4 w-4")} />
-                                                    </div>
-                                                    {it}
-                                                </CommandItem>
+                                                <MultiSelectItem key={it} value={it} set={filters.issueTypes} onToggle={(item) => setFilters(f => ({...f, issueTypes: toggleSetItem(f.issueTypes, item)}))} />
                                             ))}
                                         </CommandGroup>
                                     </CommandList>
@@ -226,12 +219,7 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
                                         <CommandEmpty>No results found.</CommandEmpty>
                                         <CommandGroup>
                                             {priorities.map(p => (
-                                                <CommandItem key={p} onSelect={() => setFilters(f => ({ ...f, priorities: toggleSetItem(f.priorities, p)}))}>
-                                                     <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", filters.priorities.has(p) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                                        <Check className={cn("h-4 w-4")} />
-                                                    </div>
-                                                    {p}
-                                                </CommandItem>
+                                                <MultiSelectItem key={p} value={p} set={filters.priorities} onToggle={(item) => setFilters(f => ({...f, priorities: toggleSetItem(f.priorities, item)}))} />
                                             ))}
                                         </CommandGroup>
                                     </CommandList>
