@@ -30,6 +30,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [filteredIssues, setFilteredIssues] = useState<JiraIssue[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchDialogOpen, setIsFetchDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
 
   const handleFetch = async (jql: string) => {
@@ -65,18 +66,21 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     return { assignees, statuses, issueTypes, priorities };
   }, [allIssues]);
 
+  const CurrentTabComponent = DashboardTabs.components.find(c => c.value === activeTab)?.component;
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
-      <DashboardTabs issues={filteredIssues} />
+      <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <div className="flex flex-col flex-1">
         <header className="flex items-center justify-between gap-4 py-4 px-6 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
           <div>
             <h1 className="text-xl md:text-2xl font-bold">
-              Dashboard
+                {DashboardTabs.components.find(c => c.value === activeTab)?.label}
             </h1>
-            <p className="text-sm text-muted-foreground">High-level project overview and metrics.</p>
+            <p className="text-sm text-muted-foreground">
+                {DashboardTabs.components.find(c => c.value === activeTab)?.description}
+            </p>
           </div>
           
           <div className="flex items-center gap-2">
@@ -125,12 +129,12 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                     </div>
                 </div>
             )}
-            {filteredIssues && (
+            {filteredIssues && CurrentTabComponent ? (
                 <div className="animate-fade-in">
-                  <div className="mt-4">
-                    <DashboardTabs.Content />
-                  </div>
+                  <CurrentTabComponent issues={filteredIssues} />
                 </div>
+              ) : (
+                 !isLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
               )
             }
         </main>

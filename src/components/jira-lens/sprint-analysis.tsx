@@ -2,15 +2,15 @@
 import { type JiraIssue } from "@/lib/types";
 import { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
-import { Info } from "lucide-react";
 import { UserWorkloadReport } from "./user-workload-report";
 import { OpenIssuesReport } from "./open-issues-report";
-import { IssuesByPriorityChart } from "./issues-by-priority-chart";
-import { IssuesByTypeChart } from "./issues-by-type-chart";
 import { IssuesByStatusChart } from "./issues-by-status-chart";
+import { CreatedIssuesByTypePie } from "./created-issues-by-type-pie";
+import { IssuesByPriorityChart } from "./issues-by-priority-chart";
+import { TimeToResolutionChart } from "./time-to-resolution-chart";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -26,13 +26,49 @@ const KpiCard = ({ title, value, description }: { title: string; value: string |
     </Card>
 );
 
+const TimeSpentByTypeChart = ({issues}: {issues: JiraIssue[]}) => {
+    const chartData = useMemo(() => {
+         const timeByTpe = issues.reduce((acc, issue) => {
+            const type = issue.issuetype || 'Other';
+            if (!acc[type]) {
+                acc[type] = 0;
+            }
+            acc[type] += issue.time_spent_hours || 0;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const labels = Object.keys(timeByTpe);
+        const data = Object.values(timeByTpe);
+
+        return {
+            labels,
+            datasets: [{
+                label: 'Time Spent (hours)',
+                data,
+                backgroundColor: ['#219ebc', '#fb8500', '#8ecae6', '#ffb703'],
+            }]
+        }
+    }, [issues]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Time Spent by Issue Type</CardTitle>
+            </CardHeader>
+            <CardContent className="h-64">
+                <Bar data={chartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false }}, scales: { y: { title: { text: 'Hours', display: true}}}}} />
+            </CardContent>
+        </Card>
+    )
+
+}
+
 export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
     const sprints = useMemo(() => {
         const sprintSet = new Set<string>();
         issues.forEach(issue => {
             issue.sprint_names?.forEach(sprint => sprintSet.add(sprint));
         });
-        // Sort sprints, assuming a "Sprint X" format
         return Array.from(sprintSet).sort((a, b) => {
             const aNum = parseInt(a.split(' ')[1] || '0');
             const bNum = parseInt(b.split(' ')[1] || '0');
@@ -87,14 +123,13 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                 label: 'Completed Story Points',
                 data: labels.map(l => velocityBySprint[l]),
                 backgroundColor: '#219ebc',
-                barThickness: 20,
+                borderColor: '#219ebc',
             }]
         }
     }, [issues, sprints]);
     
     const burndownData = useMemo(() => {
         if (!sprintData) return null;
-        // This is a simplified burndown. A real one would track remaining points day-by-day.
         const totalPoints = sprintData.committedStoryPoints;
         const labels = ['Start', 'End'];
         const data = [totalPoints, totalPoints - sprintData.completedStoryPoints];
@@ -109,7 +144,8 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                     borderDash: [5, 5],
                     fill: false,
                     tension: 0.1,
-                    type: 'line' as const
+                    type: 'line' as const,
+                    pointRadius: 0,
                 },
                 {
                     label: 'Actual Burndown',
@@ -147,7 +183,6 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                             {sprints.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                     </Select>
-                    {/* Placeholder for Sprint State filter */}
                     <Select defaultValue="active">
                         <SelectTrigger className="w-48"><SelectValue placeholder="Sprint State" /></SelectTrigger>
                         <SelectContent>
@@ -194,8 +229,13 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <IssuesByStatusChart issues={sprintIssues} />
-                        <IssuesByTypeChart issues={sprintIssues} />
+                        <CreatedIssuesByTypePie issues={sprintIssues} />
                         <IssuesByPriorityChart issues={sprintIssues} />
+                    </div>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <TimeSpentByTypeChart issues={sprintIssues} />
+                        <TimeToResolutionChart issues={sprintIssues} />
                     </div>
                     
                     <div className="space-y-6">
