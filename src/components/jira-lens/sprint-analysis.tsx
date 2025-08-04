@@ -98,6 +98,17 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
         }
     }, [sprintData]);
 
+    if(sprints.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-full p-8 bg-card rounded-lg shadow-md border">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">No Sprint Data</h2>
+                <p className="text-muted-foreground">The current issues do not contain any sprint information.</p>
+              </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="space-y-6">
