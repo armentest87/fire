@@ -2,7 +2,7 @@
 import { type JiraIssue } from "@/lib/types";
 import { useState, useMemo } from "react";
 import { DateRange } from "react-day-picker";
-import { addDays, format, parseISO } from "date-fns";
+import { subDays, format, parseISO } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
