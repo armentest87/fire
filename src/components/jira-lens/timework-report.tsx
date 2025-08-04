@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { UserWorkloadReport } from "./user-workload-report";
 import { HoursByUserChart } from "./hours-by-user-chart";
+import { WorktimeByDateChart } from "./worktime-by-date-chart";
 
 
 const KpiCard = ({ title, value, description }: { title: string, value: string, description?: string }) => (
@@ -17,20 +18,6 @@ const KpiCard = ({ title, value, description }: { title: string, value: string, 
         <CardContent>
             <p className="text-3xl font-bold">{value}</p>
             {description && <p className="text-xs text-muted-foreground">{description}</p>}
-        </CardContent>
-    </Card>
-);
-
-const WorktimeChart = () => (
-     <Card>
-        <CardHeader>
-            <CardTitle>Worktime</CardTitle>
-             <CardDescription>Total hours logged per day.</CardDescription>
-        </CardHeader>
-        <CardContent className="h-64">
-           <div className="text-muted-foreground h-full flex items-center justify-center rounded-lg bg-muted/20 border border-dashed">
-            <p>Worktime by date bar chart</p>
-           </div>
         </CardContent>
     </Card>
 );
@@ -131,7 +118,7 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
                 <div className="lg:col-span-5 space-y-6">
                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                        <HoursByUserChart issues={issues} />
-                       <WorktimeChart />
+                       <WorktimeByDateChart issues={issues} />
                    </div>
                     <TimeworkMatrixTable />
                     <UserWorkloadReport issues={issues} />
