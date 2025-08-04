@@ -1,123 +1,148 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
-import { useState, useMemo } from "react";
-import { DateRange } from "react-day-picker";
-import { subDays, format, parseISO } from "date-fns";
+import { useState, useMemo }from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Clock, DollarSign, BarChart, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { UserWorkloadReport } from "./user-workload-report";
-import { OpenIssuesReport } from "./open-issues-report";
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 
-const KpiCard = ({ title, value, icon }: { title: string, value: string | number, icon: React.ReactNode }) => (
-    <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            {icon}
+const KpiCard = ({ title, value, description }: { title: string, value: string, description?: string }) => (
+    <Card className="shadow-sm">
+        <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
+            <p className="text-3xl font-bold">{value}</p>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </CardContent>
     </Card>
 );
 
+const UsersChart = () => (
+    <Card>
+        <CardHeader>
+            <CardTitle>Users</CardTitle>
+        </CardHeader>
+        <CardContent className="h-64">
+             <p className="text-muted-foreground h-full flex items-center justify-center">User chart placeholder</p>
+        </CardContent>
+    </Card>
+);
+
+const WorktimeChart = () => (
+     <Card>
+        <CardHeader>
+            <CardTitle>Worktime</CardTitle>
+        </CardHeader>
+        <CardContent className="h-64">
+           <p className="text-muted-foreground h-full flex items-center justify-center">Worktime chart placeholder</p>
+        </CardContent>
+    </Card>
+);
+
+const TimeworkMatrixTable = () => (
+     <Card>
+        <CardHeader>
+            <CardTitle>User Timework Report</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className="overflow-x-auto">
+                <p className="text-muted-foreground h-48 flex items-center justify-center">Hierarchical time-tracking table placeholder</p>
+            </div>
+        </CardContent>
+    </Card>
+)
+
+const years = ['2023', '2022', '2021', '2020', '2019'];
+
 export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
-    const [date, setDate] = useState<DateRange | undefined>({
-        from: subDays(new Date(), 90),
-        to: new Date(),
-    });
+    const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set(['2023']));
 
-    const filteredIssues = useMemo(() => {
-        if (!date?.from) return issues;
-        return issues.filter(issue => {
-            const issueDate = parseISO(issue.updated);
-            const from = date.from!;
-            const to = date.to ?? new Date(); // Default to now if 'to' is not set
-            return issueDate >= from && issueDate <= to;
-        });
-    }, [issues, date]);
-
+    const handleYearChange = (year: string) => {
+        setSelectedYears(prev => {
+            const newSet = new Set(prev);
+            if(newSet.has(year)) {
+                newSet.delete(year);
+            } else {
+                newSet.add(year);
+            }
+            return newSet;
+        })
+    }
+    
     const kpis = useMemo(() => {
-        const timeLogs = filteredIssues.filter(i => i.time_spent_hours && i.time_spent_hours > 0);
-        const totalHours = timeLogs.reduce((sum, issue) => sum + (issue.time_spent_hours || 0), 0);
-        const billableHours = totalHours; // Assuming all hours are billable
-        const totalTasks = new Set(timeLogs.map(log => log.key)).size;
+        const totalHours = issues.reduce((sum, issue) => sum + (issue.time_spent_hours || 0), 0);
+        const uniqueDays = new Set(issues.map(i => i.updated.split('T')[0])).size;
+        const averageHours = uniqueDays > 0 ? totalHours / uniqueDays : 0;
+        
+        const formatHours = (h: number) => {
+            const hours = Math.floor(h);
+            const minutes = Math.round((h - hours) * 60);
+            return `${hours}h ${minutes}m`
+        }
 
         return {
-            totalHours: `${totalHours.toFixed(1)}h`,
-            billableHours: `${billableHours.toFixed(1)}h`,
-            utilization: `85%`, // Placeholder
-            avgTimePerTask: totalTasks > 0 ? `${(totalHours / totalTasks).toFixed(1)}h` : '0h'
+            totalHoursWorked: formatHours(totalHours),
+            averageHoursPerDay: formatHours(averageHours)
         }
-    }, [filteredIssues]);
-
+    }, [issues]);
 
     return (
-       <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-                <div className="flex gap-4">
-                     <Select defaultValue="all">
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select Project" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Projects</SelectItem>
-                            <SelectItem value="proj">Project PROJ</SelectItem>
-                        </SelectContent>
-                    </Select>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                id="date"
-                                variant={"outline"}
-                                className={cn(
-                                "w-[300px] justify-start text-left font-normal",
-                                !date && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {date?.from ? (
-                                date.to ? (
-                                    <>
-                                    {format(date.from, "LLL dd, y")} -{" "}
-                                    {format(date.to, "LLL dd, y")}
-                                    </>
-                                ) : (
-                                    format(date.from, "LLL dd, y")
-                                )
-                                ) : (
-                                <span>Pick a date</span>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                initialFocus
-                                mode="range"
-                                defaultMonth={date?.from}
-                                selected={date}
-                                onSelect={setDate}
-                                numberOfMonths={2}
-                            />
-                        </PopoverContent>
-                    </Popover>
+       <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {/* Filters Column */}
+                <div className="md:col-span-1 lg:col-span-1 space-y-4">
+                    <Card>
+                        <CardHeader><CardTitle className="text-base">Choose Project</CardTitle></CardHeader>
+                        <CardContent>
+                             <Select defaultValue="all">
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Project" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">BI Cloud apps</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </CardContent>
+                    </Card>
+                    <KpiCard title="Total Hours Worked" value={kpis.totalHoursWorked}/>
+                    <KpiCard title="Average Hours per Day" value={kpis.averageHoursPerDay} />
+                </div>
+                
+                {/* Charts Column */}
+                <div className="md:col-span-3 lg:col-span-4 space-y-4">
+                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                       <UsersChart />
+                       <WorktimeChart />
+                   </div>
+                </div>
+
+                {/* Period Column */}
+                <div className="md:col-span-4 lg:col-span-1">
+                    <Card>
+                        <CardHeader><CardTitle className="text-base">Period</CardTitle></CardHeader>
+                        <CardContent className="space-y-2">
+                           {years.map(year => (
+                               <div key={year} className="flex items-center space-x-2">
+                                   <Checkbox 
+                                        id={`year-${year}`} 
+                                        checked={selectedYears.has(year)}
+                                        onCheckedChange={() => handleYearChange(year)}
+                                    />
+                                   <Label htmlFor={`year-${year}`} className="font-normal">{year}</Label>
+                               </div>
+                           ))}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <KpiCard title="Total Hours Logged" value={kpis.totalHours} icon={<Clock className="h-4 w-4 text-muted-foreground" />}/>
-                <KpiCard title="Billable Hours" value={kpis.billableHours} icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}/>
-                <KpiCard title="Utilization Rate" value={kpis.utilization} icon={<BarChart className="h-4 w-4 text-muted-foreground" />}/>
-                <KpiCard title="Avg. Time per Task" value={kpis.avgTimePerTask} icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />} />
-            </div>
             
-            <UserWorkloadReport issues={filteredIssues} />
-            <OpenIssuesReport issues={filteredIssues} />
+            <TimeworkMatrixTable />
 
         </div>
     );
