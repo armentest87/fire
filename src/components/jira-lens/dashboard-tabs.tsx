@@ -5,6 +5,7 @@ import { Overview } from "./overview";
 import { SprintAnalysis } from "./sprint-analysis";
 import { TimeworkReport } from "./timework-report";
 import { SprintTimeReport } from "./sprint-time-report";
+import { CumulativeFlowDiagram } from "./cumulative-flow-diagram";
 
 
 export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
@@ -23,12 +24,16 @@ export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
         <Tabs defaultValue="overview" className="w-full">
             <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="cumulative-flow">Cumulative Flow</TabsTrigger>
                 <TabsTrigger value="sprint-analysis">Sprint Analysis</TabsTrigger>
                 <TabsTrigger value="sprint-time-report">Sprint Time Report</TabsTrigger>
                 <TabsTrigger value="timework-report">Timework Report</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
                  <Overview issues={issues} />
+            </TabsContent>
+            <TabsContent value="cumulative-flow">
+                <CumulativeFlowDiagram issues={issues} />
             </TabsContent>
             <TabsContent value="sprint-analysis">
                 <SprintAnalysis issues={issues} />
