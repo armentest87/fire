@@ -5,6 +5,8 @@ import { IssuesByStatusChart } from "./issues-by-status-chart";
 import { IssuesByTypeChart } from "./issues-by-type-chart";
 import { KpiCards } from "./kpi-cards";
 import { ProjectProgressChart } from "./project-progress-chart";
+import { UserWorkloadReport } from "./user-workload-report";
+import { OpenIssuesReport } from "./open-issues-report";
 
 
 export function Overview({ issues }: { issues: JiraIssue[] }) {
@@ -24,6 +26,11 @@ export function Overview({ issues }: { issues: JiraIssue[] }) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <IssuesByTypeChart issues={issues} />
                 <IssuesByPriorityChart issues={issues} />
+            </div>
+
+            <div className="space-y-6">
+                 <UserWorkloadReport issues={issues} />
+                 <OpenIssuesReport issues={issues} />
             </div>
 
         </div>
