@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Overview } from "./overview";
 import { SprintAnalysis } from "./sprint-analysis";
 import { TimeworkReport } from "./timework-report";
+import { SprintTimeReport } from "./sprint-time-report";
 
 
 export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
@@ -23,6 +24,7 @@ export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
             <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="sprint-analysis">Sprint Analysis</TabsTrigger>
+                <TabsTrigger value="sprint-time-report">Sprint Time Report</TabsTrigger>
                 <TabsTrigger value="timework-report">Timework Report</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
@@ -30,6 +32,9 @@ export function DashboardTabs({ issues }: { issues: JiraIssue[] }) {
             </TabsContent>
             <TabsContent value="sprint-analysis">
                 <SprintAnalysis issues={issues} />
+            </TabsContent>
+             <TabsContent value="sprint-time-report">
+                <SprintTimeReport issues={issues} />
             </TabsContent>
             <TabsContent value="timework-report">
                 <TimeworkReport issues={issues} />
