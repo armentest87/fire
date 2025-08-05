@@ -11,17 +11,18 @@ import { IssuesByStatusChart } from "./issues-by-status-chart";
 import { CreatedIssuesByTypePie } from "./created-issues-by-type-pie";
 import { IssuesByPriorityChart } from "./issues-by-priority-chart";
 import { TimeToResolutionChart } from "./time-to-resolution-chart";
+import { cn } from "@/lib/utils";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
-const KpiCard = ({ title, value, description }: { title: string; value: string | number; description?: string }) => (
+const KpiCard = ({ title, value, description, descriptionColor }: { title: string; value: string | number; description?: string, descriptionColor?: string }) => (
     <Card className="shadow-sm">
         <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         </CardHeader>
         <CardContent>
             <p className="text-2xl font-bold">{value}</p>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+            {description && <p className={cn("text-xs", descriptionColor || "text-muted-foreground")}>{description}</p>}
         </CardContent>
     </Card>
 );
@@ -76,7 +77,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
         });
     }, [issues]);
 
-    const [selectedSprint, setSelectedSprint] = useState<string | null>(sprints.length > 0 ? sprints[sprints.length-1] : null);
+    const [selectedSprint, setSelectedSprint] = useState<string | null>(sprints.length > 0 ? sprints.length > 0 ? sprints[sprints.length-1] : null : null);
 
     const sprintIssues = useMemo(() => {
         if (!selectedSprint) return [];
@@ -96,7 +97,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
              const remaining = i.time_spent_hours ? Math.max(0, (i.time_original_estimate_hours || 0) - i.time_spent_hours) : (i.time_original_estimate_hours || 0);
              return sum + remaining;
         }, 0);
-
+        const percentComplete = originalEstimate > 0 ? ((originalEstimate - remainingEstimate) / originalEstimate * 100) : 0;
 
         return {
             totalIssues: sprintIssues.length,
@@ -105,7 +106,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
             completedStoryPoints,
             originalEstimate: `${originalEstimate.toFixed(0)}h`,
             remainingEstimate: `${remainingEstimate.toFixed(1)}h`,
-            percentComplete: originalEstimate > 0 ? ((originalEstimate - remainingEstimate) / originalEstimate * 100).toFixed(1) : 0
+            percentComplete: percentComplete
         };
     }, [selectedSprint, sprintIssues]);
 
@@ -199,9 +200,14 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                         <KpiCard title="Start Date" value="02.08.2023" />
                         <KpiCard title="End Date" value="17.08.2023" />
                         <KpiCard title="Sprint Duration" value="15 days" />
-                        <KpiCard title="Overdue" value="1 day" />
+                        <KpiCard title="Overdue" value="1 day" description="overdue" descriptionColor="text-red-500" />
                         <KpiCard title="Original Estimate" value={sprintData.originalEstimate} />
-                        <KpiCard title="Remaining Estimate" value={sprintData.remainingEstimate} description={`${sprintData.percentComplete}% complete`} />
+                        <KpiCard 
+                            title="Remaining Estimate" 
+                            value={sprintData.remainingEstimate} 
+                            description={`${sprintData.percentComplete.toFixed(1)}% complete`}
+                            descriptionColor={sprintData.percentComplete > 50 ? "text-green-500" : "text-orange-500"}
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
