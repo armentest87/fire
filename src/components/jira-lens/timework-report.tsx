@@ -25,14 +25,16 @@ const KpiCard = ({ title, value, description }: { title: string, value: string, 
 
 const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
     const {daysInMonth, userDailyHours, totals} = useMemo(() => {
-        if (issues.length === 0) {
+        const issuesWithTime = issues.filter(i => i.time_spent_hours && i.time_spent_hours > 0 && i.updated && i.assignee);
+
+        if (issuesWithTime.length === 0) {
             return {daysInMonth: [], userDailyHours: [], totals: {hours: [], total: 0}};
         }
 
-        const latestDate = issues.reduce((max, i) => {
-            const updated = parseISO(i.updated);
+        const latestDate = issuesWithTime.reduce((max, i) => {
+            const updated = parseISO(i.updated!);
             return updated > max ? updated : max;
-        }, parseISO(issues[0].updated));
+        }, new Date(0));
 
         const monthStart = startOfMonth(latestDate);
         const monthEnd = endOfMonth(latestDate);
@@ -40,16 +42,14 @@ const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
 
         const dailyHoursMap: Record<string, Record<string, number>> = {};
 
-        issues.forEach(issue => {
-            if (issue.time_spent_hours && issue.assignee) {
-                const updatedDate = format(parseISO(issue.updated), 'yyyy-MM-dd');
-                const user = issue.assignee;
-                
-                if (!dailyHoursMap[user]) {
-                    dailyHoursMap[user] = {};
-                }
-                dailyHoursMap[user][updatedDate] = (dailyHoursMap[user][updatedDate] || 0) + issue.time_spent_hours;
+        issuesWithTime.forEach(issue => {
+            const updatedDate = format(parseISO(issue.updated!), 'yyyy-MM-dd');
+            const user = issue.assignee!;
+            
+            if (!dailyHoursMap[user]) {
+                dailyHoursMap[user] = {};
             }
+            dailyHoursMap[user][updatedDate] = (dailyHoursMap[user][updatedDate] || 0) + issue.time_spent_hours!;
         });
         
         const userDailyHours = Object.entries(dailyHoursMap).map(([user, dailyData]) => {
@@ -157,7 +157,7 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
         const totalHours = issues.reduce((sum, issue) => sum + (issue.time_spent_hours || 0), 0);
         
         const uniqueDaysWithTime = new Set(
-            issues.filter(i => (i.time_spent_hours || 0) > 0).map(i => i.updated.split('T')[0])
+            issues.filter(i => (i.time_spent_hours || 0) > 0 && i.updated).map(i => i.updated!.split('T')[0])
         ).size;
 
         const averageHours = uniqueDaysWithTime > 0 ? totalHours / uniqueDaysWithTime : 0;
