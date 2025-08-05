@@ -12,7 +12,7 @@ import { LayoutDashboard, GanttChartSquare, Clock, Hourglass, AreaChart, Server,
 import { cn } from "@/lib/utils";
 
 const tabsConfig = [
-    { value: 'overview', label: 'Overview', icon: LayoutDashboard, component: Overview, description: "High-level project overview and metrics." },
+    { value: 'overview', label: 'Overview', icon: LayoutDashboard, description: "High-level project overview and metrics." },
     { value: 'cumulative-flow', label: 'Cumulative Flow', icon: AreaChart, component: CumulativeFlowDiagram, description: "Visualizes the flow of work through different stages over time." },
     { value: 'sprint-analysis', label: 'Sprint Analysis', icon: GanttChartSquare, component: SprintAnalysis, description: "Analyze sprint velocity, burndown, and scope changes." },
     { value: 'sprint-time-report', label: 'Sprint Time Report', icon: Hourglass, component: SprintTimeReport, description: "Tracks time estimates and actuals for sprints."},
@@ -49,18 +49,15 @@ export function DashboardTabs({ activeTab, setActiveTab }: DashboardTabsProps) {
                         key={tab.value}
                         onClick={() => setActiveTab(tab.value)}
                         className={cn(
-                            "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all group",
-                            "hover:bg-primary/10",
-                            activeTab === tab.value ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                            "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all group relative",
+                            activeTab === tab.value 
+                                ? "bg-gradient-to-r from-purple-500 to-teal-400 text-white shadow-md" 
+                                : "text-muted-foreground hover:bg-muted/50"
                         )}
                     >
-                        <div className={cn(
-                            "absolute left-0 h-6 w-1 rounded-r-lg bg-transparent transition-all",
-                            activeTab === tab.value && "bg-primary"
-                        )}></div>
                         <tab.icon className={cn(
                             "h-5 w-5 transition-colors",
-                             activeTab === tab.value ? "text-primary" : "group-hover:text-foreground"
+                             activeTab === tab.value ? "text-white" : "text-muted-foreground group-hover:text-foreground"
                             )} />
                         <span>{tab.label}</span>
                     </button>
