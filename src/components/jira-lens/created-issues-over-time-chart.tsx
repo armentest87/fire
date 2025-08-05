@@ -10,11 +10,13 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 export function CreatedIssuesOverTimeChart({ issues }: { issues: JiraIssue[] }) {
     const chartData = useMemo(() => {
-        if (!issues || issues.length === 0) {
+        const validIssues = issues?.filter(i => i.created) ?? [];
+
+        if (validIssues.length === 0) {
             return { labels: [], datasets: [] };
         }
 
-        const dates = issues.map(i => parseISO(i.created));
+        const dates = validIssues.map(i => parseISO(i.created));
         const startDate = new Date(Math.min(...dates.map(d => d.getTime())));
         const endDate = new Date(Math.max(...dates.map(d => d.getTime())));
         
@@ -23,7 +25,7 @@ export function CreatedIssuesOverTimeChart({ issues }: { issues: JiraIssue[] }) 
 
         const dailyCreated: Record<string, number> = {};
 
-        issues.forEach(issue => {
+        validIssues.forEach(issue => {
             const createdDay = format(startOfDay(parseISO(issue.created)), 'yyyy-MM-dd');
             dailyCreated[createdDay] = (dailyCreated[createdDay] || 0) + 1;
         });
