@@ -27,7 +27,17 @@ export function ServiceKpiCards({ issues }: KpiCardsProps) {
     const totalCreated = issues.length;
     const totalClosed = issues.filter(i => i.status_category === 'Done').length;
     
-    const dates = issues.map(i => parseISO(i.created));
+    const issuesWithCreationDate = issues.filter(i => i.created);
+
+    if (issuesWithCreationDate.length === 0) {
+        return {
+            totalCreated,
+            totalClosed,
+            avgCreatedPerDay: (0).toFixed(2),
+        };
+    }
+
+    const dates = issuesWithCreationDate.map(i => parseISO(i.created!));
     const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
     const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
     const totalDays = differenceInDays(maxDate, minDate) + 1;
