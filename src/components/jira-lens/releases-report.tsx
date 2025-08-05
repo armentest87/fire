@@ -14,7 +14,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineEleme
 const IssuesByTypeDonut = ({ issues }: { issues: JiraIssue[] }) => {
     const chartData = useMemo(() => {
         const typeCounts = issues.reduce((acc, issue) => {
-            const type = issue.issuetype === 'Bug' ? 'Bug' : 'Task';
+            const type = issue.issuetype.name === 'Bug' ? 'Bug' : 'Task';
             acc[type] = (acc[type] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
@@ -47,9 +47,10 @@ const IssuesByTypeDonut = ({ issues }: { issues: JiraIssue[] }) => {
 const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
     const chartData = useMemo(() => {
         const dailyData: Record<string, { Bug: number, Task: number }> = {};
-        const dates = issues.map(i => parseISO(i.created));
-        if (dates.length === 0) return { labels: [], datasets: [] };
-        
+        const validIssues = issues.filter(i => i.created);
+        if (validIssues.length === 0) return { labels: [], datasets: [] };
+
+        const dates = validIssues.map(i => parseISO(i.created));
         const dateRange = eachDayOfInterval({ start: new Date(Math.min(...dates.map(d => d.getTime()))), end: new Date(Math.max(...dates.map(d => d.getTime()))) });
 
         dateRange.forEach(day => {
@@ -57,9 +58,9 @@ const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
             dailyData[dayString] = { Bug: 0, Task: 0 };
         });
 
-        issues.forEach(issue => {
+        validIssues.forEach(issue => {
             const dayString = format(parseISO(issue.created), 'yyyy-MM-dd');
-            const type = issue.issuetype === 'Bug' ? 'Bug' : 'Task';
+            const type = issue.issuetype.name === 'Bug' ? 'Bug' : 'Task';
             if (dailyData[dayString]) {
                 dailyData[dayString][type]++;
             }
@@ -93,9 +94,10 @@ const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
 
 const CumulativeIssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
     const chartData = useMemo(() => {
-         if (issues.length === 0) return { labels: [], datasets: [] };
+        const validIssues = issues.filter(i => i.created);
+        if (validIssues.length === 0) return { labels: [], datasets: [] };
 
-        const sortedIssues = issues.sort((a,b) => parseISO(a.created).getTime() - parseISO(b.created).getTime());
+        const sortedIssues = validIssues.sort((a,b) => parseISO(a.created).getTime() - parseISO(b.created).getTime());
         const labels = sortedIssues.map(i => format(parseISO(i.created), 'yyyy-MM-dd'));
         const cumulativeData = sortedIssues.map((_, index) => index + 1);
 
@@ -132,10 +134,10 @@ const DetailedReleaseTable = ({ issues }: { issues: JiraIssue[] }) => {
         const releaseMap: Record<string, { version: string, issues: JiraIssue[] }> = {};
         issues.forEach(issue => {
             issue.fix_versions?.forEach(version => {
-                if (!releaseMap[version]) {
-                    releaseMap[version] = { version, issues: [] };
+                if (!releaseMap[version.name]) {
+                    releaseMap[version.name] = { version: version.name, issues: [] };
                 }
-                releaseMap[version].issues.push(issue);
+                releaseMap[version.name].issues.push(issue);
             })
         });
         return Object.values(releaseMap);
@@ -172,16 +174,16 @@ const DetailedReleaseTable = ({ issues }: { issues: JiraIssue[] }) => {
                                 <TableRow key={issue.key}>
                                     {index === 0 && <TableCell rowSpan={release.issues.length} className="font-semibold align-top">{release.version}</TableCell>}
                                     <TableCell>{issue.key}</TableCell>
-                                    <TableCell>{issue.assignee}</TableCell>
+                                    <TableCell>{issue.assignee?.displayName}</TableCell>
                                     <TableCell className="text-right">{issue.time_spent_hours?.toFixed(1) || 'N/A'}</TableCell>
                                     <TableCell>
-                                        <Badge variant={issue.issuetype === 'Bug' ? 'destructive' : 'secondary'}>
-                                            {issue.issuetype}
+                                        <Badge variant={issue.issuetype.name === 'Bug' ? 'destructive' : 'secondary'}>
+                                            {issue.issuetype.name}
                                         </Badge>
                                     </TableCell>
                                      <TableCell>
-                                        <Badge variant={issue.status_category === 'Done' ? 'default' : 'outline'}>
-                                            {issue.status}
+                                        <Badge variant={issue.status.statusCategory.name === 'Done' ? 'default' : 'outline'}>
+                                            {issue.status.name}
                                         </Badge>
                                     </TableCell>
                                 </TableRow>
