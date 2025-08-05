@@ -14,8 +14,10 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineEleme
 const IssuesByTypeDonut = ({ issues }: { issues: JiraIssue[] }) => {
     const chartData = useMemo(() => {
         const typeCounts = issues.reduce((acc, issue) => {
-            const type = issue.issuetype.name === 'Bug' ? 'Bug' : 'Task';
-            acc[type] = (acc[type] || 0) + 1;
+            if (issue.issuetype && issue.issuetype.name) {
+                const type = issue.issuetype.name === 'Bug' ? 'Bug' : 'Task';
+                acc[type] = (acc[type] || 0) + 1;
+            }
             return acc;
         }, {} as Record<string, number>);
 
