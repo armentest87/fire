@@ -21,7 +21,8 @@ const STATUS_COLORS: Record<string, string> = {
 export function IssuesByStatusChart({ issues }: { issues: JiraIssue[] }) {
   const { chartData, statusList } = useMemo(() => {
     const statusCounts = issues.reduce((acc, issue) => {
-      acc[issue.status] = (acc[issue.status] || 0) + 1;
+      const statusName = issue.status?.name || 'No Status';
+      acc[statusName] = (acc[statusName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 

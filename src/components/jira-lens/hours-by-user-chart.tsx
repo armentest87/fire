@@ -10,8 +10,9 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 export function HoursByUserChart({ issues }: { issues: JiraIssue[] }) {
   const chartData = useMemo(() => {
     const hoursByAssignee = issues.reduce((acc, issue) => {
-      if (issue.assignee && issue.time_spent_hours) {
-        acc[issue.assignee] = (acc[issue.assignee] || 0) + issue.time_spent_hours;
+      const assignee = issue.assignee?.displayName || 'Unassigned';
+      if (issue.time_spent_hours) {
+        acc[assignee] = (acc[assignee] || 0) + issue.time_spent_hours;
       }
       return acc;
     }, {} as Record<string, number>);

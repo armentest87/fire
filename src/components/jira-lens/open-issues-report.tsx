@@ -31,7 +31,7 @@ const getStatusColor = (status: string) => {
 
 export function OpenIssuesReport({ issues }: OpenIssuesReportProps) {
   const openIssues = useMemo(() => {
-    return issues.filter(issue => issue.status_category !== 'Done')
+    return issues.filter(issue => issue.status?.statusCategory?.name !== 'Done')
                  .sort((a,b) => (b.time_spent_hours || 0) - (a.time_spent_hours || 0))
                  .slice(0, 10);
   }, [issues]);
@@ -60,17 +60,17 @@ export function OpenIssuesReport({ issues }: OpenIssuesReportProps) {
                      <TableRow key={issue.key}>
                         <TableCell className="font-medium">{issue.key}</TableCell>
                         <TableCell className="max-w-[200px] truncate">{issue.summary}</TableCell>
-                        <TableCell>{issue.assignee || 'Unassigned'}</TableCell>
+                        <TableCell>{issue.assignee?.displayName || 'Unassigned'}</TableCell>
                         <TableCell>
-                            <Badge variant="outline" className={`${getStatusColor(issue.status)} font-medium`}>
-                                {issue.status}
+                            <Badge variant="outline" className={`${getStatusColor(issue.status?.name || '')} font-medium`}>
+                                {issue.status?.name || 'No Status'}
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right">{issue.time_spent_hours ? issue.time_spent_hours.toFixed(1) : 'N/A'}</TableCell>
                         <TableCell>
                             <div className="flex items-center gap-2">
-                                {PRIORITY_ICON[issue.priority]}
-                                <span>{issue.priority}</span>
+                                {PRIORITY_ICON[issue.priority?.name || '']}
+                                <span>{issue.priority?.name || 'No Priority'}</span>
                             </div>
                         </TableCell>
                      </TableRow>

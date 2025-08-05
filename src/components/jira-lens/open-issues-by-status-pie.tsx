@@ -22,11 +22,11 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function OpenIssuesByStatusPie({ issues }: { issues: JiraIssue[] }) {
   const isMobile = useIsMobile();
-  const openIssues = useMemo(() => issues.filter(i => i.status_category !== 'Done'), [issues]);
+  const openIssues = useMemo(() => issues.filter(i => i.status?.statusCategory?.name !== 'Done'), [issues]);
 
   const chartData = useMemo(() => {
     const statusCounts = openIssues.reduce((acc, issue) => {
-      const status = issue.status || 'No Status';
+      const status = issue.status?.name || 'No Status';
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);

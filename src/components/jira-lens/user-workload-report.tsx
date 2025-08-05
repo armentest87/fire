@@ -37,9 +37,9 @@ export function UserWorkloadReport({ issues }: UserWorkloadReportProps) {
 
     const workloadData: WorkloadData[] = useMemo(() => {
         const dataByAssignee = issues.reduce((acc, issue) => {
-            if (issue.status_category === 'Done') return acc;
+            if (issue.status?.statusCategory?.name === 'Done') return acc;
             
-            const assignee = issue.assignee || 'Unassigned';
+            const assignee = issue.assignee?.displayName || 'Unassigned';
             if (!acc[assignee]) {
                 acc[assignee] = {
                     projects: {},

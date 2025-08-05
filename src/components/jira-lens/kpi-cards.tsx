@@ -13,16 +13,16 @@ interface KpiCardsProps {
 export function KpiCards({ issues }: KpiCardsProps) {
   const kpis = useMemo(() => {
     const total = issues.length;
-    const doneIssues = issues.filter(i => i.status_category === 'Done');
-    const inProgressIssues = issues.filter(i => i.status_category === 'In Progress');
-    const todoIssues = issues.filter(i => i.status_category === 'To Do');
+    const doneIssues = issues.filter(i => i.status?.statusCategory?.name === 'Done');
+    const inProgressIssues = issues.filter(i => i.status?.statusCategory?.name === 'In Progress');
+    const todoIssues = issues.filter(i => i.status?.statusCategory?.name === 'To Do');
 
     const doneCount = doneIssues.length;
     const completionRate = total > 0 ? (doneCount / total) * 100 : 0;
     
-    const resolvedIssues = doneIssues.filter(i => i.resolved);
+    const resolvedIssues = doneIssues.filter(i => i.resolved && i.created);
     const totalResolutionDays = resolvedIssues.reduce((acc, i) => {
-        if (!i.resolved) return acc;
+        if (!i.resolved || !i.created) return acc;
         return acc + differenceInDays(parseISO(i.resolved), parseISO(i.created));
     }, 0);
     const avgResolutionTime = resolvedIssues.length > 0 ? totalResolutionDays / resolvedIssues.length : 0;

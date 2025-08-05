@@ -20,7 +20,7 @@ export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
   const isMobile = useIsMobile();
   const chartData = useMemo(() => {
     const priorityCounts = issues.reduce((acc, issue) => {
-      const priority = issue.priority || 'No Priority';
+      const priority = issue.priority?.name || 'No Priority';
       acc[priority] = (acc[priority] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);

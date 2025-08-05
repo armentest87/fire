@@ -30,29 +30,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function ProjectProgressChart({ issues }: ProjectProgressChartProps) {
   const chartData = useMemo(() => {
-    const statusCounts = issues.reduce((acc, issue) => {
-      const status = issue.status;
-      if (!acc[status]) {
-        acc[status] = { 'To Do': 0, 'In Progress': 0, 'Done': 0 };
-      }
-      acc[status][issue.status_category]++;
-      return acc;
-    }, {} as Record<string, Record<'To Do' | 'In Progress' | 'Done', number>>);
-
-    const labels = Object.keys(statusCounts);
-    const datasets = Object.keys(STATUS_COLORS).map(status => {
-        return {
-            label: status,
-            data: labels.map(label => statusCounts[label]?.[status as any] ?? 0),
-            backgroundColor: STATUS_COLORS[status],
-            barThickness: 20,
-        };
-    }).filter(d => d.data.some(v => v > 0));
-
     const statusData = Object.keys(STATUS_COLORS).map(status => {
       return {
         label: status,
-        data: [issues.filter(i => i.status === status).length],
+        data: [issues.filter(i => i.status?.name === status).length],
         backgroundColor: STATUS_COLORS[status]
       }
     }).filter(d => d.data[0] > 0);

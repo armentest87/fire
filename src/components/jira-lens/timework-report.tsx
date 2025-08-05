@@ -32,7 +32,8 @@ const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
         }
 
         const latestDate = issuesWithTime.reduce((max, i) => {
-            const updated = parseISO(i.updated!);
+            if (!i.updated) return max;
+            const updated = parseISO(i.updated);
             return updated > max ? updated : max;
         }, new Date(0));
 
@@ -43,13 +44,14 @@ const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
         const dailyHoursMap: Record<string, Record<string, number>> = {};
 
         issuesWithTime.forEach(issue => {
-            const updatedDate = format(parseISO(issue.updated!), 'yyyy-MM-dd');
-            const user = issue.assignee!;
+            if (!issue.updated || !issue.assignee?.displayName) return;
+            const updatedDate = format(parseISO(issue.updated), 'yyyy-MM-dd');
+            const user = issue.assignee.displayName;
             
             if (!dailyHoursMap[user]) {
                 dailyHoursMap[user] = {};
             }
-            dailyHoursMap[user][updatedDate] = (dailyHoursMap[user][updatedDate] || 0) + issue.time_spent_hours!;
+            dailyHoursMap[user][updatedDate] = (dailyHoursMap[user][updatedDate] || 0) + (issue.time_spent_hours || 0);
         });
         
         const userDailyHours = Object.entries(dailyHoursMap).map(([user, dailyData]) => {

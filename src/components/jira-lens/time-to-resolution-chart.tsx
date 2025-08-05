@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartOptions } from 'chart.js';
+import { parseISO as dateFnsParseISO } from 'date-fns';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -18,16 +19,27 @@ const TARGET_HOURS = {
     'Default': 48,
 }
 
-const getData = (issues: JiraIssue[], groupBy: 'priority' | 'issuetype' | 'assignee') => {
+type GroupByKey = 'priority' | 'issuetype' | 'assignee';
+
+const getData = (issues: JiraIssue[], groupBy: GroupByKey) => {
     const resolvedIssues = issues.filter(i => i.resolved && i.created);
     const grouped = resolvedIssues.reduce((acc, issue) => {
-        const key = issue[groupBy] || `Unassigned`;
+        let key: string | undefined;
+        if (groupBy === 'assignee') {
+            key = issue.assignee?.displayName;
+        } else {
+            key = issue[groupBy]?.name;
+        }
+        key = key || 'Unassigned';
+
         if (!acc[key]) {
             acc[key] = { totalHours: 0, count: 0 };
         }
-        const resolutionHours = (parseISO(issue.resolved!).getTime() - parseISO(issue.created).getTime()) / (1000 * 3600);
-        acc[key].totalHours += resolutionHours;
-        acc[key].count++;
+        if (issue.resolved && issue.created) {
+             const resolutionHours = (dateFnsParseISO(issue.resolved).getTime() - dateFnsParseISO(issue.created).getTime()) / (1000 * 3600);
+             acc[key].totalHours += resolutionHours;
+             acc[key].count++;
+        }
         return acc;
     }, {} as Record<string, { totalHours: number, count: number }>);
 

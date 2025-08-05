@@ -11,7 +11,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 export function WorktimeByDateChart({ issues }: { issues: JiraIssue[] }) {
   const chartData = useMemo(() => {
     const hoursByDate = issues.reduce((acc, issue) => {
-      if (issue.time_spent_hours && issue.time_spent_hours > 0) {
+      if (issue.time_spent_hours && issue.time_spent_hours > 0 && issue.updated) {
         const date = format(parseISO(issue.updated), 'yyyy-MM-dd');
         acc[date] = (acc[date] || 0) + issue.time_spent_hours;
       }

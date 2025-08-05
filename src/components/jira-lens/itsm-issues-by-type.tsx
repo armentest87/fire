@@ -19,7 +19,7 @@ const TYPE_COLORS: Record<string, string> = {
 export function ItsmIssuesByType({ issues }: { issues: JiraIssue[] }) {
   const { chartData, typeList, totalIssues } = useMemo(() => {
     const typeCounts = issues.reduce((acc, issue) => {
-      const type = issue.issuetype || 'No Type';
+      const type = issue.issuetype?.name || 'No Type';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);

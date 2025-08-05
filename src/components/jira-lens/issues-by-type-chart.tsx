@@ -14,7 +14,8 @@ const TYPE_COLORS = ["#219ebc", "#8ecae6", "#023047", "#ffb703", "#fb8500", "#a8
 export function IssuesByTypeChart({ issues }: { issues: JiraIssue[] }) {
   const chartData = useMemo(() => {
     const typeCounts = issues.reduce((acc, issue) => {
-      acc[issue.issuetype] = (acc[issue.issuetype] || 0) + 1;
+      const typeName = issue.issuetype?.name || 'No Type';
+      acc[typeName] = (acc[typeName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 

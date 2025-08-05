@@ -20,7 +20,7 @@ export function CreatedIssuesByTypePie({ issues }: { issues: JiraIssue[] }) {
   const isMobile = useIsMobile();
   const chartData = useMemo(() => {
     const typeCounts = issues.reduce((acc, issue) => {
-      const type = issue.issuetype || 'No Type';
+      const type = issue.issuetype?.name || 'No Type';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);

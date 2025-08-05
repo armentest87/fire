@@ -50,19 +50,19 @@ export function JiraFilterPopover({ allIssues, onFilterChange, assignees, status
         let filtered = allIssues;
 
         if (filters.date) {
-            filtered = filtered.filter(issue => parseISO(issue.created) >= filters.date!);
+            filtered = filtered.filter(issue => issue.created && parseISO(issue.created) >= filters.date!);
         }
         if (filters.assignees.size > 0) {
-            filtered = filtered.filter(issue => issue.assignee && filters.assignees.has(issue.assignee));
+            filtered = filtered.filter(issue => issue.assignee?.displayName && filters.assignees.has(issue.assignee.displayName));
         }
         if (filters.statuses.size > 0) {
-            filtered = filtered.filter(issue => filters.statuses.has(issue.status));
+            filtered = filtered.filter(issue => issue.status?.name && filters.statuses.has(issue.status.name));
         }
         if (filters.issueTypes.size > 0) {
-            filtered = filtered.filter(issue => filters.issueTypes.has(issue.issuetype));
+            filtered = filtered.filter(issue => issue.issuetype?.name && filters.issueTypes.has(issue.issuetype.name));
         }
         if (filters.priorities.size > 0) {
-            filtered = filtered.filter(issue => issue.priority && filters.priorities.has(issue.priority));
+            filtered = filtered.filter(issue => issue.priority?.name && filters.priorities.has(issue.priority.name));
         }
         if (filters.issueKey) {
             filtered = filtered.filter(issue => issue.key.toLowerCase().includes(filters.issueKey.toLowerCase()));

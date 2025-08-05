@@ -136,7 +136,7 @@ const TimeReportByIssueTable = ({ issues }: { issues: JiraIssue[] }) => {
                             {issues.map(issue => (
                                 <TableRow key={issue.key}>
                                     <TableCell>{issue.key}</TableCell>
-                                    <TableCell>{issue.assignee}</TableCell>
+                                    <TableCell>{issue.assignee?.displayName}</TableCell>
                                     <TableCell>{formatHours(issue.time_original_estimate_hours)}</TableCell>
                                     <TableCell>{formatHours(issue.time_spent_hours ? Math.max(0, (issue.time_original_estimate_hours || 0) - issue.time_spent_hours) : (issue.time_original_estimate_hours || 0))}</TableCell>
                                     <TableCell>{formatHours(issue.time_spent_hours)}</TableCell>
@@ -154,7 +154,7 @@ const TimeReportByIssueTable = ({ issues }: { issues: JiraIssue[] }) => {
 const TimeReportByAssigneeTable = ({ issues }: { issues: JiraIssue[] }) => {
     const dataByAssignee = useMemo(() => {
         const assignees = issues.reduce((acc, issue) => {
-            const assignee = issue.assignee || 'Unassigned';
+            const assignee = issue.assignee?.displayName || 'Unassigned';
             if (!acc[assignee]) {
                 acc[assignee] = { original: 0, remaining: 0, logged: 0 };
             }

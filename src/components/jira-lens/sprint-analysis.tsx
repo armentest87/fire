@@ -30,7 +30,7 @@ const KpiCard = ({ title, value, description, descriptionColor }: { title: strin
 const TimeSpentByTypeChart = ({issues}: {issues: JiraIssue[]}) => {
     const chartData = useMemo(() => {
          const timeByTpe = issues.reduce((acc, issue) => {
-            const type = issue.issuetype || 'Other';
+            const type = issue.issuetype?.name || 'Other';
             if (!acc[type]) {
                 acc[type] = 0;
             }
@@ -89,7 +89,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
         if (!selectedSprint || sprintIssues.length === 0) return null;
         
         const committedStoryPoints = sprintIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
-        const completedIssues = sprintIssues.filter(i => i.status_category === 'Done');
+        const completedIssues = sprintIssues.filter(i => i.status?.statusCategory?.name === 'Done');
         const completedStoryPoints = completedIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
 
         const originalEstimate = sprintIssues.reduce((sum, i) => sum + (i.time_original_estimate_hours || 0), 0);
@@ -114,7 +114,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
     const historicalVelocityData = useMemo(() => {
         const velocityBySprint: Record<string, number> = {};
         sprints.forEach(sprint => {
-            const aSprintIssues = issues.filter(issue => issue.sprint_names?.includes(sprint) && issue.status_category === 'Done');
+            const aSprintIssues = issues.filter(issue => issue.sprint_names?.includes(sprint) && issue.status?.statusCategory?.name === 'Done');
             velocityBySprint[sprint] = aSprintIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
         });
         const labels = Object.keys(velocityBySprint);
