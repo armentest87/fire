@@ -26,11 +26,13 @@ const hexToRgba = (hex: string, alpha: number) => {
 
 export function CreatedIssuesByTypeOverTimeChart({ issues }: { issues: JiraIssue[] }) {
     const chartData = useMemo(() => {
-        if (!issues || issues.length === 0) {
+        const validIssues = issues?.filter(i => i.created) ?? [];
+
+        if (validIssues.length === 0) {
             return { labels: [], datasets: [] };
         }
 
-        const dates = issues.map(i => parseISO(i.created));
+        const dates = validIssues.map(i => parseISO(i.created));
         const startDate = new Date(Math.min(...dates.map(d => d.getTime())));
         const endDate = new Date();
 
@@ -39,9 +41,9 @@ export function CreatedIssuesByTypeOverTimeChart({ issues }: { issues: JiraIssue
 
         const monthlyTypedCounts: Record<string, Record<string, number>> = {};
 
-        issues.forEach(issue => {
+        validIssues.forEach(issue => {
             const monthKey = format(startOfMonth(parseISO(issue.created)), 'MMM yyyy');
-            const type = issue.issuetype || 'Other';
+            const type = issue.issuetype.name || 'Other';
 
             if (!monthlyTypedCounts[type]) {
                 monthlyTypedCounts[type] = {};
