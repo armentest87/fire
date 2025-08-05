@@ -19,7 +19,7 @@ const TARGET_HOURS = {
 }
 
 const getData = (issues: JiraIssue[], groupBy: 'priority' | 'issuetype' | 'assignee') => {
-    const resolvedIssues = issues.filter(i => i.resolved);
+    const resolvedIssues = issues.filter(i => i.resolved && i.created);
     const grouped = resolvedIssues.reduce((acc, issue) => {
         const key = issue[groupBy] || `Unassigned`;
         if (!acc[key]) {

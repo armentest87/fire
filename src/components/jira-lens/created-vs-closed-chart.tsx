@@ -14,7 +14,16 @@ export function CreatedVsClosedChart({ issues }: { issues: JiraIssue[] }) {
             return { labels: [], datasets: [] };
         }
 
-        const dates = issues.flatMap(i => [parseISO(i.created), i.resolved ? parseISO(i.resolved) : null]).filter(Boolean) as Date[];
+        const dates = issues.flatMap(i => {
+            const created = i.created ? parseISO(i.created) : null;
+            const resolved = i.resolved ? parseISO(i.resolved) : null;
+            return [created, resolved];
+        }).filter(Boolean) as Date[];
+        
+        if (dates.length === 0) {
+            return { labels: [], datasets: [] };
+        }
+
         const startDate = new Date(Math.min(...dates.map(d => d.getTime())));
         const endDate = new Date(Math.max(...dates.map(d => d.getTime())));
         
@@ -25,8 +34,10 @@ export function CreatedVsClosedChart({ issues }: { issues: JiraIssue[] }) {
         const dailyClosed: Record<string, number> = {};
 
         issues.forEach(issue => {
-            const createdDay = format(startOfDay(parseISO(issue.created)), 'yyyy-MM-dd');
-            dailyCreated[createdDay] = (dailyCreated[createdDay] || 0) + 1;
+            if (issue.created) {
+                const createdDay = format(startOfDay(parseISO(issue.created)), 'yyyy-MM-dd');
+                dailyCreated[createdDay] = (dailyCreated[createdDay] || 0) + 1;
+            }
 
             if (issue.resolved) {
                 const closedDay = format(startOfDay(parseISO(issue.resolved)), 'yyyy-MM-dd');
