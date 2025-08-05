@@ -12,7 +12,7 @@ import { LayoutDashboard, GanttChartSquare, Clock, Hourglass, AreaChart, Server,
 import { cn } from "@/lib/utils";
 
 const tabsConfig = [
-    { value: 'overview', label: 'Overview', icon: LayoutDashboard, description: "High-level project overview and metrics." },
+    { value: 'overview', label: 'Overview', icon: LayoutDashboard, component: Overview, description: "High-level project overview and metrics." },
     { value: 'cumulative-flow', label: 'Cumulative Flow', icon: AreaChart, component: CumulativeFlowDiagram, description: "Visualizes the flow of work through different stages over time." },
     { value: 'sprint-analysis', label: 'Sprint Analysis', icon: GanttChartSquare, component: SprintAnalysis, description: "Analyze sprint velocity, burndown, and scope changes." },
     { value: 'sprint-time-report', label: 'Sprint Time Report', icon: Hourglass, component: SprintTimeReport, description: "Tracks time estimates and actuals for sprints."},
