@@ -106,7 +106,7 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                             aria-expanded={projectPopoverOpen}
                             className="w-full justify-between"
                             >
-                            {projectKey
+                            {projectKey && selectedProjectName
                                 ? `${selectedProjectName} (${projectKey})`
                                 : "Select project..."}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -115,27 +115,29 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                         <PopoverContent className="w-[270px] p-0">
                             <Command>
                             <CommandInput placeholder="Search project..." />
-                            <CommandEmpty>No project found.</CommandEmpty>
-                            <CommandGroup>
-                                {projects.map((project) => (
-                                <CommandItem
-                                    key={project.key}
-                                    value={project.key}
-                                    onSelect={(currentValue) => {
-                                      setProjectKey(currentValue.toUpperCase() === projectKey ? "" : currentValue.toUpperCase())
-                                      setProjectPopoverOpen(false)
-                                    }}
-                                >
-                                    <Check
-                                    className={cn(
-                                        "mr-2 h-4 w-4",
-                                        projectKey === project.key ? "opacity-100" : "opacity-0"
-                                    )}
-                                    />
-                                    {project.name} ({project.key})
-                                </CommandItem>
-                                ))}
-                            </CommandGroup>
+                            <CommandList>
+                                <CommandEmpty>No project found.</CommandEmpty>
+                                <CommandGroup>
+                                    {projects.map((project) => (
+                                    <CommandItem
+                                        key={project.key}
+                                        value={project.key}
+                                        onSelect={(currentValue) => {
+                                          setProjectKey(currentValue === projectKey ? "" : currentValue)
+                                          setProjectPopoverOpen(false)
+                                        }}
+                                    >
+                                        <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            projectKey === project.key ? "opacity-100" : "opacity-0"
+                                        )}
+                                        />
+                                        {project.name} ({project.key})
+                                    </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
                             </Command>
                         </PopoverContent>
                     </Popover>
