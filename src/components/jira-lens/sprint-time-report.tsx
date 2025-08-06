@@ -1,6 +1,6 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar } from 'react-chartjs-2';
@@ -201,19 +201,32 @@ const TimeReportByAssigneeTable = ({ issues }: { issues: JiraIssue[] }) => {
 }
 
 
-export function SprintTimeReport({ issues }: { issues: JiraIssue[] }) {
+export function SprintTimeReport({ issues, allIssues }: { issues: JiraIssue[], allIssues: JiraIssue[] }) {
     const sprints = useMemo(() => {
         const sprintSet = new Set<string>();
-        issues.forEach(issue => {
+        allIssues.forEach(issue => {
             issue.sprint_names?.forEach(sprint => sprintSet.add(sprint));
         });
-        return Array.from(sprintSet).sort((a, b) => parseInt(b.split(' ')[1] || '0') - parseInt(a.split(' ')[1] || '0'));
-    }, [issues]);
+        return Array.from(sprintSet).sort((a, b) => {
+            const aNum = parseInt(a.match(/\d+$/)?.[0] || '0');
+            const bNum = parseInt(b.match(/\d+$/)?.[0] || '0');
+            if (aNum !== bNum) return bNum - aNum;
+            return b.localeCompare(a);
+        });
+    }, [allIssues]);
     
     const [selectedSprint, setSelectedSprint] = useState<string | null>(sprints[0] || null);
 
+    useEffect(() => {
+        if (sprints.length > 0 && !sprints.includes(selectedSprint || '')) {
+            setSelectedSprint(sprints[0]);
+        } else if (sprints.length === 0) {
+            setSelectedSprint(null);
+        }
+    }, [sprints, selectedSprint]);
+
     const sprintIssues = useMemo(() => {
-        if (!selectedSprint) return issues;
+        if (!selectedSprint) return []; // Return empty array if no sprint is selected
         return issues.filter(issue => issue.sprint_names?.includes(selectedSprint));
     }, [selectedSprint, issues]);
 
@@ -246,12 +259,6 @@ export function SprintTimeReport({ issues }: { issues: JiraIssue[] }) {
                         <SelectTrigger className="w-48"><SelectValue placeholder="Select a sprint" /></SelectTrigger>
                         <SelectContent>
                             {sprints.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <Select defaultValue="all">
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Choose Assignee" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Assignees</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { HoursByUserChart } from "./hours-by-user-chart";
 import { WorktimeByDateChart } from "./worktime-by-date-chart";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table";
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDate } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, getDate, getYear } from 'date-fns';
 
 
 const KpiCard = ({ title, value, description }: { title: string, value: string, description?: string }) => (
@@ -138,11 +138,26 @@ const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
     )
 }
 
-const years = ['2024', '2023', '2022', '2021', '2020', '2019'];
 
-export function TimeworkReport({ issues, projects }: { issues: JiraIssue[], projects: JiraProject[] }) {
-    const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set(['2024','2023']));
+export function TimeworkReport({ issues, projects, allIssues }: { issues: JiraIssue[], projects: JiraProject[], allIssues: JiraIssue[] }) {
+    
+    const years = useMemo(() => {
+        const yearSet = new Set<string>();
+        allIssues.forEach(i => {
+            if (i.updated) {
+                yearSet.add(getYear(parseISO(i.updated)).toString());
+            }
+        });
+        return Array.from(yearSet).sort((a,b) => parseInt(b) - parseInt(a));
+    }, [allIssues]);
+
+    const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set(years));
     const [selectedProject, setSelectedProject] = useState('all');
+
+    useEffect(() => {
+        setSelectedYears(new Set(years));
+    }, [years]);
+
 
     const handleYearChange = (year: string) => {
         setSelectedYears(prev => {

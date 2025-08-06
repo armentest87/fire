@@ -1,6 +1,6 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
@@ -64,20 +64,27 @@ const TimeSpentByTypeChart = ({issues}: {issues: JiraIssue[]}) => {
 
 }
 
-export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
+export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; allIssues: JiraIssue[] }) {
     const sprints = useMemo(() => {
         const sprintSet = new Set<string>();
-        issues.forEach(issue => {
+        allIssues.forEach(issue => {
             issue.sprint_names?.forEach(sprint => sprintSet.add(sprint));
         });
         return Array.from(sprintSet).sort((a, b) => {
-            const aNum = parseInt(a.split(' ')[1] || '0');
-            const bNum = parseInt(b.split(' ')[1] || '0');
-            return aNum - bNum;
+             const aNum = parseInt(a.match(/\d+$/)?.[0] || '0');
+             const bNum = parseInt(b.match(/\d+$/)?.[0] || '0');
+             if (aNum !== bNum) return aNum - bNum;
+             return a.localeCompare(b);
         });
-    }, [issues]);
+    }, [allIssues]);
 
-    const [selectedSprint, setSelectedSprint] = useState<string | null>(sprints.length > 0 ? sprints.length > 0 ? sprints[sprints.length-1] : null : null);
+    const [selectedSprint, setSelectedSprint] = useState<string | null>(null);
+    
+    useEffect(() => {
+        if (sprints.length > 0) {
+            setSelectedSprint(sprints[sprints.length - 1]);
+        }
+    }, [sprints]);
 
     const sprintIssues = useMemo(() => {
         if (!selectedSprint) return [];
@@ -114,7 +121,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
     const historicalVelocityData = useMemo(() => {
         const velocityBySprint: Record<string, number> = {};
         sprints.forEach(sprint => {
-            const aSprintIssues = issues.filter(issue => issue.sprint_names?.includes(sprint) && issue.status?.statusCategory?.name === 'Done');
+            const aSprintIssues = allIssues.filter(issue => issue.sprint_names?.includes(sprint) && issue.status?.statusCategory?.name === 'Done');
             velocityBySprint[sprint] = aSprintIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
         });
         const labels = Object.keys(velocityBySprint);
@@ -127,7 +134,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                 borderColor: '#219ebc',
             }]
         }
-    }, [issues, sprints]);
+    }, [allIssues, sprints]);
     
     const burndownData = useMemo(() => {
         if (!sprintData) return null;
@@ -161,7 +168,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
         }
     }, [sprintData]);
 
-    if(sprints.length === 0) {
+    if (sprints.length === 0) {
         return (
             <div className="flex items-center justify-center h-full p-8 bg-card rounded-lg shadow-md border">
               <div className="text-center">
@@ -172,7 +179,6 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
         );
     }
 
-
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 justify-between md:items-center">
@@ -182,13 +188,6 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                         <SelectTrigger className="w-48"><SelectValue placeholder="Select a sprint" /></SelectTrigger>
                         <SelectContent>
                             {sprints.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <Select defaultValue="active">
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Sprint State" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="active">Active Sprints</SelectItem>
-                            <SelectItem value="completed">Completed Sprints</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -225,7 +224,7 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                                 <CardHeader>
                                     <CardTitle>Sprint Burndown Chart</CardTitle>
                                      <CardDescription>Ideal vs. actual burndown of story points.</CardDescription>
-                                </CardHeader>
+                                </Header>
                                 <CardContent className="h-72">
                                     <Line data={burndownData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: {display: true, text: 'Story Points Remaining'}}} }} />
                                 </CardContent>
@@ -255,5 +254,5 @@ export function SprintAnalysis({ issues }: { issues: JiraIssue[] }) {
                  </div>
             )}
         </div>
-    )
+    );
 }
