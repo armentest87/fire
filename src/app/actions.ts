@@ -42,6 +42,18 @@ export async function fetchJiraProjects(credentials: JiraCredentials): Promise<J
     }
 }
 
+// Helper to parse the complex sprint string from Jira custom fields.
+// Example string: "com.atlassian.greenhopper.service.sprint.Sprint@...[id=1,rapidViewId=1,state=CLOSED,name=Sprint 1,startDate=...,endDate=...]"
+function parseSprintNames(sprintField: any): string[] {
+    if (!sprintField || !Array.isArray(sprintField)) {
+        return [];
+    }
+    return sprintField.map((sprintString: string) => {
+        const nameMatch = sprintString.match(/name=([^,]+)/);
+        return nameMatch ? nameMatch[1] : 'Unnamed Sprint';
+    });
+}
+
 
 export async function fetchJiraData(credentials: JiraCredentials, jql: string): Promise<JiraIssue[]> {
     // We must use POST for potentially long JQL queries.
@@ -100,11 +112,12 @@ export async function fetchJiraData(credentials: JiraCredentials, jql: string): 
             labels: issue.fields.labels || [],
             fix_versions: issue.fields.fixVersions?.map((v: any) => ({ name: v.name })) || [],
             
-            // Note: Custom field IDs (like for story points) can vary between Jira instances.
-            // You may need to find the correct ID (e.g., 'customfield_10016') in your instance settings.
+            // Note: Custom field IDs (like for story points and sprints) can vary between Jira instances.
+            // You may need to find the correct ID (e.g., 'customfield_10016', 'customfield_10020') in your instance settings.
             story_points: issue.fields.customfield_10016 || null, 
             
-            sprint_names: issue.fields.sprint?.name ? [issue.fields.sprint.name] : (issue.fields.closedSprints?.map((s:any) => s.name) || []),
+            // The sprint field is often a custom field containing a complex string.
+            sprint_names: parseSprintNames(issue.fields.customfield_10020),
 
             time_original_estimate_hours: issue.fields.timeoriginalestimate ? issue.fields.timeoriginalestimate / 3600 : null,
             time_spent_hours: issue.fields.timespent ? issue.fields.timespent / 3600 : null,

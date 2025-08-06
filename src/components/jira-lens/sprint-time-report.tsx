@@ -26,12 +26,18 @@ const formatHours = (hours: number | null | undefined): string => {
     return `${h}h ${m}m`;
 }
 
+const getRemainingHours = (issue: JiraIssue): number => {
+    const original = issue.time_original_estimate_hours || 0;
+    const spent = issue.time_spent_hours || 0;
+    return Math.max(0, original - spent);
+};
+
 const EstimatePercentageChart = ({ issues }: { issues: JiraIssue[] }) => {
     const chartData = useMemo(() => {
         const data = issues
             .map(issue => {
                 const original = issue.time_original_estimate_hours || 0;
-                const remaining = issue.time_spent_hours ? Math.max(0, original - issue.time_spent_hours) : original;
+                const remaining = getRemainingHours(issue);
                 const percentage = original > 0 ? (remaining / original) * 100 : 0;
                 return { key: issue.key, percentage };
             })
@@ -79,10 +85,7 @@ const EstimateComparisonChart = ({ issues }: { issues: JiraIssue[] }) => {
                 },
                 {
                     label: 'Remaining Estimate',
-                    data: data.map(d => {
-                        const original = d.time_original_estimate_hours || 0;
-                        return d.time_spent_hours ? Math.max(0, original - d.time_spent_hours) : original;
-                    }),
+                    data: data.map(d => getRemainingHours(d)),
                     backgroundColor: '#023047',
                 }
             ]
@@ -103,8 +106,7 @@ const TimeReportByIssueTable = ({ issues }: { issues: JiraIssue[] }) => {
     const totals = useMemo(() => {
         return issues.reduce((acc, issue) => {
             acc.original += issue.time_original_estimate_hours || 0;
-            const remaining = issue.time_spent_hours ? Math.max(0, (issue.time_original_estimate_hours || 0) - issue.time_spent_hours) : (issue.time_original_estimate_hours || 0);
-            acc.remaining += remaining;
+            acc.remaining += getRemainingHours(issue);
             acc.logged += issue.time_spent_hours || 0;
             return acc;
         }, { original: 0, remaining: 0, logged: 0 });
@@ -138,7 +140,7 @@ const TimeReportByIssueTable = ({ issues }: { issues: JiraIssue[] }) => {
                                     <TableCell>{issue.key}</TableCell>
                                     <TableCell>{issue.assignee?.displayName}</TableCell>
                                     <TableCell>{formatHours(issue.time_original_estimate_hours)}</TableCell>
-                                    <TableCell>{formatHours(issue.time_spent_hours ? Math.max(0, (issue.time_original_estimate_hours || 0) - issue.time_spent_hours) : (issue.time_original_estimate_hours || 0))}</TableCell>
+                                    <TableCell>{formatHours(getRemainingHours(issue))}</TableCell>
                                     <TableCell>{formatHours(issue.time_spent_hours)}</TableCell>
                                 </TableRow>
                             ))}
@@ -159,9 +161,8 @@ const TimeReportByAssigneeTable = ({ issues }: { issues: JiraIssue[] }) => {
                 acc[assignee] = { original: 0, remaining: 0, logged: 0 };
             }
              acc[assignee].original += issue.time_original_estimate_hours || 0;
-            const remaining = issue.time_spent_hours ? Math.max(0, (issue.time_original_estimate_hours || 0) - issue.time_spent_hours) : (issue.time_original_estimate_hours || 0);
-            acc[assignee].remaining += remaining;
-            acc[assignee].logged += issue.time_spent_hours || 0;
+             acc[assignee].remaining += getRemainingHours(issue);
+             acc[assignee].logged += issue.time_spent_hours || 0;
 
             return acc;
         }, {} as Record<string, {original: number, remaining: number, logged: number}>);
@@ -210,7 +211,7 @@ export function SprintTimeReport({ issues, allIssues }: { issues: JiraIssue[], a
         return Array.from(sprintSet).sort((a, b) => {
             const aNum = parseInt(a.match(/\d+$/)?.[0] || '0');
             const bNum = parseInt(b.match(/\d+$/)?.[0] || '0');
-            if (aNum !== bNum) return bNum - aNum;
+            if (aNum !== bNum) return bNum - aNum; // Sort descending by number
             return b.localeCompare(a);
         });
     }, [allIssues]);
@@ -218,12 +219,12 @@ export function SprintTimeReport({ issues, allIssues }: { issues: JiraIssue[], a
     const [selectedSprint, setSelectedSprint] = useState<string | null>(null);
 
     useEffect(() => {
-        if (sprints.length > 0) {
+        if (!selectedSprint && sprints.length > 0) {
             setSelectedSprint(sprints[0]);
-        } else {
+        } else if (sprints.length === 0) {
             setSelectedSprint(null);
         }
-    }, [sprints]);
+    }, [sprints, selectedSprint]);
 
     const sprintIssues = useMemo(() => {
         if (!selectedSprint) return []; // Return empty array if no sprint is selected
@@ -232,11 +233,7 @@ export function SprintTimeReport({ issues, allIssues }: { issues: JiraIssue[], a
 
     const { originalEstimate, remainingEstimate, percentComplete } = useMemo(() => {
         const original = sprintIssues.reduce((sum, i) => sum + (i.time_original_estimate_hours || 0), 0);
-        const remaining = sprintIssues.reduce((sum, i) => {
-            const time_spent = i.time_spent_hours || 0;
-            const original_est = i.time_original_estimate_hours || 0;
-            return sum + Math.max(0, original_est - time_spent);
-        }, 0);
+        const remaining = sprintIssues.reduce((sum, i) => sum + getRemainingHours(i), 0);
         const percent = original > 0 ? ((original - remaining) / original) * 100 : 0;
         return {
             originalEstimate: formatHours(original),

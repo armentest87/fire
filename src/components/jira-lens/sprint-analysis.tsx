@@ -101,10 +101,8 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
         const completedStoryPoints = completedIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
 
         const originalEstimate = sprintIssues.reduce((sum, i) => sum + (i.time_original_estimate_hours || 0), 0);
-        const remainingEstimate = sprintIssues.reduce((sum, i) => {
-             const remaining = i.time_spent_hours ? Math.max(0, (i.time_original_estimate_hours || 0) - i.time_spent_hours) : (i.time_original_estimate_hours || 0);
-             return sum + remaining;
-        }, 0);
+        const timeSpent = sprintIssues.reduce((sum, i) => sum + (i.time_spent_hours || 0), 0);
+        const remainingEstimate = Math.max(0, originalEstimate - timeSpent);
         const percentComplete = originalEstimate > 0 ? ((originalEstimate - remainingEstimate) / originalEstimate * 100) : 0;
 
         return {
@@ -260,5 +258,3 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
         </div>
     );
 }
-
-    
