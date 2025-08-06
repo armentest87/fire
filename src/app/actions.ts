@@ -60,6 +60,7 @@ function transformJiraIssue(issue: any): JiraIssue {
     for (const key in issue.fields) {
         if (key.startsWith('customfield_')) {
             const fieldValue = issue.fields[key];
+            // The sprint field is an array of strings containing sprint details
             if (Array.isArray(fieldValue) && fieldValue.length > 0 && typeof fieldValue[0] === 'string' && fieldValue[0].includes('com.atlassian.greenhopper.service.sprint.Sprint')) {
                 sprintNames = parseSprintNames(fieldValue);
                 break; // Found it, no need to check other fields

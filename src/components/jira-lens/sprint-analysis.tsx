@@ -1,3 +1,4 @@
+
 'use client';
 import { type JiraIssue } from "@/lib/types";
 import { useState, useMemo, useEffect } from "react";
@@ -82,6 +83,8 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
     useEffect(() => {
         if (!selectedSprint && sprints.length > 0) {
             setSelectedSprint(sprints[sprints.length - 1]);
+        } else if (sprints.length > 0 && selectedSprint && !sprints.includes(selectedSprint)) {
+            setSelectedSprint(sprints[sprints.length - 1]); // Reselect if the current one is no longer valid
         } else if (sprints.length === 0) {
             setSelectedSprint(null);
         }

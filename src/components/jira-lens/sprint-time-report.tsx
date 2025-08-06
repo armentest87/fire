@@ -1,3 +1,4 @@
+
 'use client';
 import { type JiraIssue } from "@/lib/types";
 import { useState, useMemo, useEffect } from "react";
@@ -219,7 +220,7 @@ export function SprintTimeReport({ issues, allIssues }: { issues: JiraIssue[], a
     const [selectedSprint, setSelectedSprint] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!selectedSprint && sprints.length > 0) {
+        if (sprints.length > 0 && (!selectedSprint || !sprints.includes(selectedSprint))) {
             setSelectedSprint(sprints[0]);
         } else if (sprints.length === 0) {
             setSelectedSprint(null);
