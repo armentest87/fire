@@ -43,23 +43,24 @@ export async function fetchJiraProjects(credentials: JiraCredentials): Promise<J
 }
 
 // Helper to parse the complex sprint string from Jira custom fields.
-// Example string: "com.atlassian.greenhopper.service.sprint.Sprint@...[id=1,rapidViewId=1,state=CLOSED,name=Sprint 1,startDate=...,endDate=...]"
+// It handles two common formats: an array of objects or an array of strings.
 function parseSprintNames(sprintField: any): string[] {
     if (!sprintField || !Array.isArray(sprintField)) {
         return [];
     }
 
-    // Check if the array contains objects with a 'name' property
+    // Check if the array contains objects with a 'name' property (modern API response)
     if (sprintField.length > 0 && typeof sprintField[0] === 'object' && sprintField[0] !== null && 'name' in sprintField[0]) {
-        return sprintField.map((sprintObject: { name: string }) => sprintObject.name);
+        return sprintField.map((sprintObject: { name: string }) => sprintObject.name).filter(Boolean);
     }
     
-    // Fallback to parsing the complex string format
+    // Fallback to parsing the complex string format (older API response)
+    // Example string: "com.atlassian.greenhopper.service.sprint.Sprint@...[id=1,rapidViewId=1,state=CLOSED,name=Sprint 1,startDate=...]"
     if (sprintField.length > 0 && typeof sprintField[0] === 'string') {
         return sprintField.map((sprintString: string) => {
             const nameMatch = sprintString.match(/name=([^,]+)/);
-            return nameMatch ? nameMatch[1] : 'Unnamed Sprint';
-        }).filter(name => name !== 'Unnamed Sprint');
+            return nameMatch ? nameMatch[1] : null;
+        }).filter(Boolean) as string[];
     }
 
     return [];
@@ -68,8 +69,9 @@ function parseSprintNames(sprintField: any): string[] {
 
 function transformJiraIssue(issue: any): JiraIssue {
     let sprintNames: string[] = [];
+    
     // Dynamically find the sprint field by checking its content.
-    // The sprint field is usually an array of strings containing sprint details.
+    // The sprint field is usually an array of strings or objects containing sprint details.
     for (const key in issue.fields) {
         if (key.startsWith('customfield_')) {
             const fieldValue = issue.fields[key];
