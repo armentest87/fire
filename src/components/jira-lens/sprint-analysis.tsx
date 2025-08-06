@@ -225,7 +225,7 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
                                 <CardHeader>
                                     <CardTitle>Sprint Burndown Chart</CardTitle>
                                      <CardDescription>Ideal vs. actual burndown of story points.</CardDescription>
-                                </Header>
+                                </CardHeader>
                                 <CardContent className="h-72">
                                     <Line data={burndownData} options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: {display: true, text: 'Story Points Remaining'}}} }} />
                                 </CardContent>
@@ -260,3 +260,5 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
         </div>
     );
 }
+
+    
