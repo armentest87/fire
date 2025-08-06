@@ -12,16 +12,17 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
+  const [url, setUrl] = useState('https://jira-lens.atlassian.net');
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
-  
-  const JIRA_URL = "https://your-domain.atlassian.net"; // Static instance URL
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && token) {
+    if (url && email && token) {
+      // Remove trailing slash if present
+      const formattedUrl = url.endsWith('/') ? url.slice(0, -1) : url;
       onLogin({
-        url: JIRA_URL,
+        url: formattedUrl,
         email,
         token
       });
@@ -34,9 +35,20 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <form onSubmit={handleSubmit}>
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-2xl font-bold text-gray-800 dark:text-gray-100">Jira Lens</CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-400">Connect to Jira to see your dashboard. The instance is preset to: <br/> <code className="p-1 mt-2 inline-block bg-gray-100 dark:bg-gray-800 rounded-md text-gray-700 dark:text-gray-300 text-xs">{JIRA_URL}</code></CardDescription>
+            <CardDescription className="text-gray-600 dark:text-gray-400">Connect to Jira to see your dashboard.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+             <div className="space-y-1">
+              <Label htmlFor="jira-url" className="text-gray-700 dark:text-gray-300">Jira URL</Label>
+              <Input 
+                id="jira-url" 
+                placeholder="https://your-domain.atlassian.net" 
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                required
+                className="bg-white dark:bg-gray-800"
+              />
+            </div>
             <div className="space-y-1">
               <Label htmlFor="jira-email" className="text-gray-700 dark:text-gray-300">Jira Email</Label>
               <Input 

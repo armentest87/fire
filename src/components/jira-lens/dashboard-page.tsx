@@ -4,8 +4,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { type JiraIssue, type JiraCredentials, type JiraProject } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Filter, Loader2 } from 'lucide-react';
-import { fetchJiraData, fetchJiraProjects } from '@/lib/dummy-data';
+import { LogOut, Loader2 } from 'lucide-react';
+import { fetchJiraData, fetchJiraProjects } from '@/app/actions';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
@@ -36,26 +36,31 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
   useEffect(() => {
     const loadProjects = async () => {
+        setIsLoading(true);
         try {
-            const fetchedProjects = await fetchJiraProjects();
+            const fetchedProjects = await fetchJiraProjects(credentials);
             setProjects(fetchedProjects);
         } catch (error) {
             toast({
                 title: "Error fetching projects",
-                description: "Could not load the list of available projects.",
+                description: error instanceof Error ? error.message : "Could not load the list of available projects.",
                 variant: "destructive",
             });
+        } finally {
+            setIsLoading(false);
         }
     };
-    loadProjects();
-  }, [toast]);
+    if (credentials.url) {
+      loadProjects();
+    }
+  }, [credentials, toast]);
 
   const handleFetch = async (jql: string) => {
     setIsLoading(true);
     setAllIssues(null);
     setFilteredIssues(null);
     try {
-      const data = await fetchJiraData(jql);
+      const data = await fetchJiraData(credentials, jql);
       setAllIssues(data);
       setFilteredIssues(data);
       toast({
@@ -144,7 +149,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             {isLoading && (
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center">
-                      <p className="text-lg text-muted-foreground">Loading project data...</p>
+                      <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+                      <p className="text-lg text-muted-foreground mt-4">Loading project data...</p>
                     </div>
                 </div>
             )}
