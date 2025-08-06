@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { type JiraCredentials } from '@/lib/types';
-import { LogIn } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 
 interface LoginPageProps {
   onLogin: (credentials: JiraCredentials) => void;
+  isConnecting: boolean;
 }
 
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage({ onLogin, isConnecting }: LoginPageProps) {
   const [url, setUrl] = useState('https://jira-lens.atlassian.net');
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
@@ -46,6 +47,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 required
+                disabled={isConnecting}
                 className="bg-white dark:bg-gray-800"
               />
             </div>
@@ -57,6 +59,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isConnecting}
                 className="bg-white dark:bg-gray-800"
               />
             </div>
@@ -69,14 +72,24 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 required
+                disabled={isConnecting}
                 className="bg-white dark:bg-gray-800"
               />
                <p className="text-xs text-gray-500 dark:text-gray-400 pt-1">You can generate a token from your Atlassian account settings.</p>
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full">
-              <LogIn className="mr-2 h-4 w-4" /> Connect & Analyze
+            <Button type="submit" className="w-full" disabled={isConnecting}>
+              {isConnecting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" /> Connect & Analyze
+                </>
+              )}
             </Button>
           </CardFooter>
         </form>

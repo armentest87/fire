@@ -29,7 +29,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [allIssues, setAllIssues] = useState<JiraIssue[] | null>(null);
   const [filteredIssues, setFilteredIssues] = useState<JiraIssue[] | null>(null);
   const [projects, setProjects] = useState<JiraProject[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [isFetchDialogOpen, setIsFetchDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
@@ -46,6 +47,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 description: error instanceof Error ? error.message : "Could not load the list of available projects.",
                 variant: "destructive",
             });
+            // If fetching projects fails on dashboard, maybe we logout?
+            onLogout();
         } finally {
             setIsLoading(false);
         }
@@ -53,10 +56,10 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     if (credentials.url) {
       loadProjects();
     }
-  }, [credentials, toast]);
+  }, [credentials, toast, onLogout]);
 
   const handleFetch = async (jql: string) => {
-    setIsLoading(true);
+    setIsFetchingIssues(true);
     setAllIssues(null);
     setFilteredIssues(null);
     try {
@@ -74,7 +77,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsFetchingIssues(false);
       setIsFetchDialogOpen(false);
     }
   };
@@ -90,6 +93,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
   const CurrentTabComponent = DashboardTabs.components.find(c => c.value === activeTab)?.component;
   const currentTabInfo = DashboardTabs.components.find(c => c.value === activeTab);
+  
+  const isDataLoading = isLoading || isFetchingIssues;
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
@@ -118,8 +123,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               />
             )}
 
-            <Button onClick={() => setIsFetchDialogOpen(true)} disabled={isLoading}>
-              {isLoading ? (
+            <Button onClick={() => setIsFetchDialogOpen(true)} disabled={isDataLoading}>
+              {isFetchingIssues ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Fetching...
@@ -133,7 +138,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               isOpen={isFetchDialogOpen}
               onOpenChange={setIsFetchDialogOpen}
               onFetch={handleFetch}
-              isFetching={isLoading}
+              isFetching={isFetchingIssues}
               projects={projects}
             />
 
@@ -145,12 +150,14 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-            {!allIssues && !isLoading && <WelcomePlaceholder />}
-            {isLoading && (
+            {!allIssues && !isDataLoading && <WelcomePlaceholder />}
+            {isDataLoading && (
                 <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                       <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-                      <p className="text-lg text-muted-foreground mt-4">Loading project data...</p>
+                      <p className="text-lg text-muted-foreground mt-4">
+                        {isLoading ? "Loading projects..." : "Fetching issues..."}
+                      </p>
                     </div>
                 </div>
             )}
@@ -159,7 +166,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                   <CurrentTabComponent issues={filteredIssues} />
                 </div>
               ) : (
-                 !isLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
+                 !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
               )
             }
         </main>
