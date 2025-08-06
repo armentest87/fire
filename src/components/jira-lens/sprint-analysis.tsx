@@ -81,10 +81,10 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
     const [selectedSprint, setSelectedSprint] = useState<string | null>(null);
     
     useEffect(() => {
-        if (sprints.length > 0) {
+        if (sprints.length > 0 && !sprints.includes(selectedSprint || '')) {
             setSelectedSprint(sprints[sprints.length - 1]);
         }
-    }, [sprints]);
+    }, [sprints, selectedSprint]);
 
     const sprintIssues = useMemo(() => {
         if (!selectedSprint) return [];
