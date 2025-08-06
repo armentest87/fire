@@ -215,15 +215,15 @@ export function SprintTimeReport({ issues, allIssues }: { issues: JiraIssue[], a
         });
     }, [allIssues]);
     
-    const [selectedSprint, setSelectedSprint] = useState<string | null>(sprints[0] || null);
+    const [selectedSprint, setSelectedSprint] = useState<string | null>(null);
 
     useEffect(() => {
-        if (sprints.length > 0 && !sprints.includes(selectedSprint || '')) {
+        if (sprints.length > 0) {
             setSelectedSprint(sprints[0]);
-        } else if (sprints.length === 0) {
+        } else {
             setSelectedSprint(null);
         }
-    }, [sprints, selectedSprint]);
+    }, [sprints]);
 
     const sprintIssues = useMemo(() => {
         if (!selectedSprint) return []; // Return empty array if no sprint is selected

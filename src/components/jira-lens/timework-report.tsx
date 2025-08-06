@@ -1,6 +1,6 @@
 'use client';
 import { type JiraIssue, type JiraProject } from "@/lib/types";
-import { useState, useMemo }from "react";
+import { useState, useMemo, useEffect }from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

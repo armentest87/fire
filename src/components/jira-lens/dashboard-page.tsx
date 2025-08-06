@@ -95,7 +95,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const currentTabInfo = DashboardTabs.components.find(c => c.value === activeTab);
   
   const isDataLoading = isLoading || isFetchingIssues;
-  const issuesForTab = filteredIssues ?? allIssues ?? [];
+  const issuesForTab = filteredIssues ?? [];
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
@@ -162,9 +162,9 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                     </div>
                 </div>
             )}
-            {CurrentTabComponent ? (
+            {CurrentTabComponent && allIssues ? (
                 <div className="animate-fade-in">
-                  <CurrentTabComponent issues={issuesForTab} projects={projects} allIssues={allIssues ?? []} />
+                  <CurrentTabComponent issues={issuesForTab} projects={projects} allIssues={allIssues} />
                 </div>
               ) : (
                  !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
