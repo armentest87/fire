@@ -48,22 +48,41 @@ function parseSprintNames(sprintField: any): string[] {
     if (!sprintField || !Array.isArray(sprintField)) {
         return [];
     }
-    return sprintField.map((sprintString: string) => {
-        const nameMatch = sprintString.match(/name=([^,]+)/);
-        return nameMatch ? nameMatch[1] : 'Unnamed Sprint';
-    });
+
+    // Check if the array contains objects with a 'name' property
+    if (sprintField.length > 0 && typeof sprintField[0] === 'object' && sprintField[0] !== null && 'name' in sprintField[0]) {
+        return sprintField.map((sprintObject: { name: string }) => sprintObject.name);
+    }
+    
+    // Fallback to parsing the complex string format
+    if (sprintField.length > 0 && typeof sprintField[0] === 'string') {
+        return sprintField.map((sprintString: string) => {
+            const nameMatch = sprintString.match(/name=([^,]+)/);
+            return nameMatch ? nameMatch[1] : 'Unnamed Sprint';
+        }).filter(name => name !== 'Unnamed Sprint');
+    }
+
+    return [];
 }
 
+
 function transformJiraIssue(issue: any): JiraIssue {
-    // Dynamically find the sprint field
     let sprintNames: string[] = [];
+    // Dynamically find the sprint field by checking its content.
+    // The sprint field is usually an array of strings containing sprint details.
     for (const key in issue.fields) {
         if (key.startsWith('customfield_')) {
             const fieldValue = issue.fields[key];
-            // The sprint field is an array of strings containing sprint details
-            if (Array.isArray(fieldValue) && fieldValue.length > 0 && typeof fieldValue[0] === 'string' && fieldValue[0].includes('com.atlassian.greenhopper.service.sprint.Sprint')) {
-                sprintNames = parseSprintNames(fieldValue);
-                break; // Found it, no need to check other fields
+            if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+                 // Check if it's the sprint field by inspecting the content of the first element
+                 const firstElement = fieldValue[0];
+                 if (
+                    (typeof firstElement === 'string' && firstElement.includes('com.atlassian.greenhopper.service.sprint.Sprint')) ||
+                    (typeof firstElement === 'object' && firstElement !== null && 'id' in firstElement && 'name' in firstElement && 'state' in firstElement)
+                 ) {
+                    sprintNames = parseSprintNames(fieldValue);
+                    break; // Found and parsed the sprint field, no need to check further.
+                 }
             }
         }
     }

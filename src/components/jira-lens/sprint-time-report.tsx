@@ -220,10 +220,12 @@ export function SprintTimeReport({ issues, allIssues }: { issues: JiraIssue[], a
     const [selectedSprint, setSelectedSprint] = useState<string | null>(null);
 
     useEffect(() => {
-        if (sprints.length > 0 && (!selectedSprint || !sprints.includes(selectedSprint))) {
-            setSelectedSprint(sprints[0]);
-        } else if (sprints.length === 0) {
-            setSelectedSprint(null);
+        if (sprints.length > 0) {
+            if (!selectedSprint || !sprints.includes(selectedSprint)) {
+                setSelectedSprint(sprints[0]);
+            }
+        } else {
+             setSelectedSprint(null);
         }
     }, [sprints, selectedSprint]);
 
