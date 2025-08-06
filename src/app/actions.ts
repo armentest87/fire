@@ -54,79 +54,90 @@ function parseSprintNames(sprintField: any): string[] {
     });
 }
 
+function transformJiraIssue(issue: any): JiraIssue {
+    return {
+        key: issue.key,
+        summary: issue.fields.summary,
+        issuetype: {
+            name: issue.fields.issuetype?.name || 'N/A',
+        },
+        status: {
+            name: issue.fields.status?.name || 'N/A',
+            statusCategory: {
+                name: issue.fields.status?.statusCategory?.name || 'To Do',
+            },
+        },
+        priority: issue.fields.priority ? { name: issue.fields.priority.name } : null,
+        reporter: issue.fields.reporter ? { displayName: issue.fields.reporter.displayName } : null,
+        assignee: issue.fields.assignee ? { displayName: issue.fields.assignee.displayName } : null,
+        created: issue.fields.created,
+        updated: issue.fields.updated,
+        resolved: issue.fields.resolutiondate,
+        components: issue.fields.components?.map((c: any) => ({ name: c.name })) || [],
+        labels: issue.fields.labels || [],
+        fix_versions: issue.fields.fixVersions?.map((v: any) => ({ name: v.name })) || [],
+        
+        story_points: issue.fields.customfield_10016 || null, 
+        sprint_names: parseSprintNames(issue.fields.customfield_10020),
+
+        time_original_estimate_hours: issue.fields.timeoriginalestimate ? issue.fields.timeoriginalestimate / 3600 : null,
+        time_spent_hours: issue.fields.timespent ? issue.fields.timespent / 3600 : null,
+        
+        changelog: issue.changelog || { histories: [] },
+    };
+}
+
 
 export async function fetchJiraData(credentials: JiraCredentials, jql: string): Promise<JiraIssue[]> {
-    // We must use POST for potentially long JQL queries.
     const fullUrl = `${credentials.url}/rest/api/3/search`;
     const { email, token } = credentials;
     const authToken = Buffer.from(`${email}:${token}`).toString('base64');
     
-    // Request all fields and expand changelog for detailed analysis.
-    const body = {
-        jql: jql,
-        startAt: 0,
-        maxResults: 200, // Limiting to 200 issues for performance
-        fields: ["*all"], // Fetch all fields
-        expand: ["changelog"], // Expand changelog for status history
-    };
+    let allIssues: JiraIssue[] = [];
+    let startAt = 0;
+    let total = -1;
+    const maxResults = 100; // Fetch issues in batches of 100
 
-    try {
-        const response = await fetch(fullUrl, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Basic ${authToken}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        });
+    do {
+        const body = {
+            jql: jql,
+            startAt: startAt,
+            maxResults: maxResults,
+            fields: ["*all"],
+            expand: ["changelog"],
+        };
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Jira API Error on issue fetch:", errorText);
-            throw new Error(`Jira API request failed with status ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json() as any;
-        
-        // Transform the rich Jira API response to our simplified JiraIssue model
-        return data.issues.map((issue: any) => ({
-            key: issue.key,
-            summary: issue.fields.summary,
-            issuetype: {
-                name: issue.fields.issuetype?.name || 'N/A',
-            },
-            status: {
-                name: issue.fields.status?.name || 'N/A',
-                statusCategory: {
-                    name: issue.fields.status?.statusCategory?.name || 'To Do',
+        try {
+            const response = await fetch(fullUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${authToken}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
                 },
-            },
-            priority: issue.fields.priority ? { name: issue.fields.priority.name } : null,
-            reporter: issue.fields.reporter ? { displayName: issue.fields.reporter.displayName } : null,
-            assignee: issue.fields.assignee ? { displayName: issue.fields.assignee.displayName } : null,
-            created: issue.fields.created,
-            updated: issue.fields.updated,
-            resolved: issue.fields.resolutiondate,
-            components: issue.fields.components?.map((c: any) => ({ name: c.name })) || [],
-            labels: issue.fields.labels || [],
-            fix_versions: issue.fields.fixVersions?.map((v: any) => ({ name: v.name })) || [],
-            
-            // Note: Custom field IDs (like for story points and sprints) can vary between Jira instances.
-            // You may need to find the correct ID (e.g., 'customfield_10016', 'customfield_10020') in your instance settings.
-            story_points: issue.fields.customfield_10016 || null, 
-            
-            // The sprint field is often a custom field containing a complex string.
-            sprint_names: parseSprintNames(issue.fields.customfield_10020),
+                body: JSON.stringify(body),
+            });
 
-            time_original_estimate_hours: issue.fields.timeoriginalestimate ? issue.fields.timeoriginalestimate / 3600 : null,
-            time_spent_hours: issue.fields.timespent ? issue.fields.timespent / 3600 : null,
-            
-            changelog: issue.changelog || { histories: [] },
-        }));
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Jira API Error on issue fetch:", errorText);
+                throw new Error(`Jira API request failed with status ${response.status}: ${errorText}`);
+            }
 
-    } catch (error) {
-        console.error("Failed to fetch Jira issues:", error);
-        throw new Error("Could not fetch issues. Please check your JQL query and permissions.");
-    }
+            const data = await response.json() as any;
+            if (total === -1) {
+                total = data.total;
+            }
+
+            const fetchedIssues = data.issues.map(transformJiraIssue);
+            allIssues = allIssues.concat(fetchedIssues);
+            startAt += fetchedIssues.length;
+
+        } catch (error) {
+            console.error("Failed to fetch Jira issues:", error);
+            throw new Error("Could not fetch issues. Please check your JQL query and permissions.");
+        }
+    } while (total > allIssues.length);
+
+    return allIssues;
 }
