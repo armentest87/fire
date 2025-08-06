@@ -55,6 +55,19 @@ function parseSprintNames(sprintField: any): string[] {
 }
 
 function transformJiraIssue(issue: any): JiraIssue {
+    // Dynamically find the sprint field
+    let sprintNames: string[] = [];
+    for (const key in issue.fields) {
+        if (key.startsWith('customfield_')) {
+            const fieldValue = issue.fields[key];
+            if (Array.isArray(fieldValue) && fieldValue.length > 0 && typeof fieldValue[0] === 'string' && fieldValue[0].includes('com.atlassian.greenhopper.service.sprint.Sprint')) {
+                sprintNames = parseSprintNames(fieldValue);
+                break; // Found it, no need to check other fields
+            }
+        }
+    }
+
+
     return {
         key: issue.key,
         summary: issue.fields.summary,
@@ -78,7 +91,7 @@ function transformJiraIssue(issue: any): JiraIssue {
         fix_versions: issue.fields.fixVersions?.map((v: any) => ({ name: v.name })) || [],
         
         story_points: issue.fields.customfield_10016 || null, 
-        sprint_names: parseSprintNames(issue.fields.customfield_10020),
+        sprint_names: sprintNames,
 
         time_original_estimate_hours: issue.fields.timeoriginalestimate ? issue.fields.timeoriginalestimate / 3600 : null,
         time_spent_hours: issue.fields.timespent ? issue.fields.timespent / 3600 : null,
@@ -95,15 +108,15 @@ export async function fetchJiraData(credentials: JiraCredentials, jql: string): 
     
     let allIssues: JiraIssue[] = [];
     let startAt = 0;
-    let total = -1;
-    const maxResults = 100; // Fetch issues in batches of 100
+    let isLastPage = false;
+    const maxResults = 100;
 
-    do {
+    while (!isLastPage) {
         const body = {
             jql: jql,
             startAt: startAt,
             maxResults: maxResults,
-            fields: ["*all"],
+            fields: ["*all", "created"], // Ensure created is explicitly requested for sorting
             expand: ["changelog"],
         };
 
@@ -125,19 +138,21 @@ export async function fetchJiraData(credentials: JiraCredentials, jql: string): 
             }
 
             const data = await response.json() as any;
-            if (total === -1) {
-                total = data.total;
-            }
-
+            
             const fetchedIssues = data.issues.map(transformJiraIssue);
             allIssues = allIssues.concat(fetchedIssues);
-            startAt += fetchedIssues.length;
+            
+            if ((data.startAt + data.issues.length) >= data.total) {
+                isLastPage = true;
+            } else {
+                startAt += data.issues.length;
+            }
 
         } catch (error) {
             console.error("Failed to fetch Jira issues:", error);
             throw new Error("Could not fetch issues. Please check your JQL query and permissions.");
         }
-    } while (total > allIssues.length);
+    } 
 
     return allIssues;
 }
