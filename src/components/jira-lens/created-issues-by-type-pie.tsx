@@ -2,7 +2,7 @@
 import { type JiraIssue } from "@/lib/types";
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Pie } from 'react-chartjs-2';
+import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -47,6 +47,7 @@ export function CreatedIssuesByTypePie({ issues }: { issues: JiraIssue[] }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: '70%',
     plugins: {
       legend: {
          position: isMobile ? 'top' : 'right' as const,
@@ -80,7 +81,7 @@ export function CreatedIssuesByTypePie({ issues }: { issues: JiraIssue[] }) {
         <CardDescription>Distribution of all created issues.</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow min-h-[250px] sm:min-h-[300px]">
-         <Pie data={chartData} options={options as any} />
+         <Doughnut data={chartData} options={options as any} />
       </CardContent>
     </Card>
   );
