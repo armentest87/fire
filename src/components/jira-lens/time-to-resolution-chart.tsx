@@ -9,13 +9,6 @@ import { parseISO as dateFnsParseISO } from 'date-fns';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const TARGET_HOURS = {
-    'Highest': 12,
-    'High': 24,
-    'Medium': 72,
-    'Low': 168,
-    'Lowest': 336,
-    'Bug': 24,
-    'New Feature': 48,
     'Default': 48,
 }
 
@@ -46,24 +39,20 @@ const getData = (issues: JiraIssue[], groupBy: GroupByKey) => {
     return Object.entries(grouped).map(([key, data]) => ({
         key,
         avgHours: data.totalHours / data.count,
-    })).sort((a,b) => b.avgHours - a.avgHours).slice(0, 5);
+    })).sort((a,b) => b.avgHours - a.avgHours).slice(0, 10);
 }
 
 export function TimeToResolutionChart({ issues }: { issues: JiraIssue[] }) {
     
   const chartData = useMemo(() => {
-    const byPriority = getData(issues, 'priority');
-    const byType = getData(issues, 'issuetype');
     const byAssignee = getData(issues, 'assignee');
     
-    const allKeys = [...new Set([...byPriority.map(d => d.key), ...byType.map(d => `Type: ${d.key}`), ...byAssignee.map(d => `Assignee: ${d.key}`.substring(0, 15))])];
-
-    const actualData = [...byPriority, ...byType, ...byAssignee].map(d => d.avgHours);
-    const targetData = [...byPriority, ...byType, ...byAssignee].map(d => (TARGET_HOURS as any)[d.key] || TARGET_HOURS.Default);
+    const actualData = byAssignee.map(d => d.avgHours);
+    const targetData = byAssignee.map(() => TARGET_HOURS.Default);
 
 
     return {
-      labels: [...byPriority.map(d => d.key), ...byType.map(d => d.key), ...byAssignee.map(d => d.key.substring(0,15))],
+      labels: byAssignee.map(d => d.key),
       datasets: [
         {
           label: 'Actual Hours',
@@ -106,7 +95,7 @@ export function TimeToResolutionChart({ issues }: { issues: JiraIssue[] }) {
     <Card>
         <CardHeader>
             <CardTitle>Average Time to Resolution</CardTitle>
-            <CardDescription>Actual vs. target resolution times by different groups.</CardDescription>
+            <CardDescription>Actual vs. target resolution times by assignee.</CardDescription>
         </CardHeader>
         <CardContent className="h-80">
            <Bar data={chartData} options={options} />
