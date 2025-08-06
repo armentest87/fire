@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { type JiraIssue, type JiraCredentials } from '@/lib/types';
+import { useState, useMemo, useEffect } from 'react';
+import { type JiraIssue, type JiraCredentials, type JiraProject } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { LogOut, Filter, Loader2 } from 'lucide-react';
-import { fetchJiraData } from '@/lib/dummy-data';
+import { fetchJiraData, fetchJiraProjects } from '@/lib/dummy-data';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
@@ -28,10 +28,27 @@ const WelcomePlaceholder = () => (
 export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [allIssues, setAllIssues] = useState<JiraIssue[] | null>(null);
   const [filteredIssues, setFilteredIssues] = useState<JiraIssue[] | null>(null);
+  const [projects, setProjects] = useState<JiraProject[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchDialogOpen, setIsFetchDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
+
+  useEffect(() => {
+    const loadProjects = async () => {
+        try {
+            const fetchedProjects = await fetchJiraProjects();
+            setProjects(fetchedProjects);
+        } catch (error) {
+            toast({
+                title: "Error fetching projects",
+                description: "Could not load the list of available projects.",
+                variant: "destructive",
+            });
+        }
+    };
+    loadProjects();
+  }, [toast]);
 
   const handleFetch = async (jql: string) => {
     setIsLoading(true);
@@ -59,10 +76,10 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
   const uniqueFilterOptions = useMemo(() => {
     if (!allIssues) return { assignees: [], statuses: [], issueTypes: [], priorities: [] };
-    const assignees = [...new Set(allIssues.map(i => i.assignee).filter(Boolean))].sort();
-    const statuses = [...new Set(allIssues.map(i => i.status))].sort();
-    const issueTypes = [...new Set(allIssues.map(i => i.issuetype))].sort();
-    const priorities = [...new Set(allIssues.map(i => i.priority))].sort();
+    const assignees = [...new Set(allIssues.map(i => i.assignee?.displayName).filter(Boolean))].sort();
+    const statuses = [...new Set(allIssues.map(i => i.status?.name).filter(Boolean))].sort();
+    const issueTypes = [...new Set(allIssues.map(i => i.issuetype?.name).filter(Boolean))].sort();
+    const priorities = [...new Set(allIssues.map(i => i.priority?.name).filter(Boolean))].sort();
     return { assignees, statuses, issueTypes, priorities };
   }, [allIssues]);
 
@@ -112,6 +129,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               onOpenChange={setIsFetchDialogOpen}
               onFetch={handleFetch}
               isFetching={isLoading}
+              projects={projects}
             />
 
             <Button variant="ghost" size="icon" onClick={onLogout}>

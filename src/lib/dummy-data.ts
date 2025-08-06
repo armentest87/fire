@@ -1,5 +1,5 @@
 
-import { type JiraIssue } from './types';
+import { type JiraIssue, type JiraProject } from './types';
 import { subDays, addDays } from 'date-fns';
 
 const ISSUE_TYPES = ['Story', 'Bug', 'Task', 'Epic'];
@@ -58,6 +58,20 @@ function createChangelog(createdDate: Date, resolvedDate: Date | null, finalStat
   return { histories };
 }
 
+export const fetchJiraProjects = (): Promise<JiraProject[]> => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve([
+                { key: 'PROJ', name: 'Main Project Alpha' },
+                { key: 'DEV', name: 'Development Team Board' },
+                { key: 'SUP', name: 'Support Desk' },
+                { key: 'WEB', name: 'Website Revamp' },
+                { key: 'BI', name: 'Business Intelligence' },
+            ]);
+        }, 500);
+    });
+};
+
 export const fetchJiraData = (jql: string): Promise<JiraIssue[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -89,47 +103,45 @@ export const fetchJiraData = (jql: string): Promise<JiraIssue[]> => {
 
         issues.push({
           key: `PROJ-${i + 1}`,
-          fields: {
-            summary: `Issue summary number ${i + 1}`,
-            issuetype: {
-                name: getRandomElement(ISSUE_TYPES)
-            },
-            status: {
-                name: statusName,
-                statusCategory: {
-                    name: statusCategoryName
-                }
-            },
-            priority: {
-                name: getRandomElement(PRIORITIES)
-            },
-            reporter: {
-                displayName: reporterName,
-            },
-            assignee: assigneeName ? {
-                displayName: assigneeName
-            } : null,
-            created: createdDate.toISOString(),
-            updated: (resolvedDate || addDays(createdDate, 1)).toISOString(),
-            resolutiondate: resolvedDate ? resolvedDate.toISOString() : null,
-            components: getRandomSubset(COMPONENTS).map(name => ({ name })),
-            labels: ['refactor', 'ui', 'backend', 'bugfix'].filter(() => Math.random() > 0.8),
-            fixVersions: getRandomSubset(VERSIONS).map(name => ({ name })),
-            customfield_10016: Math.random() > 0.3 ? getRandomElement([1, 2, 3, 5, 8, 13]) : null, // Story Points
-            sprint: getRandomSubset(SPRINTS),
-            timeoriginalestimate: Math.random() > 0.3 ? ((Math.random() * 16) + 1) * 3600 : null, // in seconds
-            timespent: time_spent_seconds, // in seconds
-
-            // These are not standard Jira fields but calculated for our dashboard
-            lead_time_days,
-            cycle_time_days: cycle_time_days && cycle_time_days > 0 ? cycle_time_days : null,
-            sla_met: Math.random() > 0.3 ? true : false,
-            budget: Math.random() > 0.4 ? Math.random() * 5000 + 1000 : null,
-            labor_cost,
-            other_expenses,
-            actual_cost: (labor_cost || 0) + other_expenses,
-            revenue: Math.random() > 0.6 ? Math.random() * 10000 : null,
+          summary: `Issue summary number ${i + 1}`,
+          issuetype: {
+              name: getRandomElement(ISSUE_TYPES)
           },
+          status: {
+              name: statusName,
+              statusCategory: {
+                  name: statusCategoryName
+              }
+          },
+          priority: {
+              name: getRandomElement(PRIORITIES)
+          },
+          reporter: {
+              displayName: reporterName,
+          },
+          assignee: assigneeName ? {
+              displayName: assigneeName
+          } : null,
+          created: createdDate.toISOString(),
+          updated: (resolvedDate || addDays(createdDate, 1)).toISOString(),
+          resolved: resolvedDate ? resolvedDate.toISOString() : null,
+          components: getRandomSubset(COMPONENTS).map(name => ({ name })),
+          labels: ['refactor', 'ui', 'backend', 'bugfix'].filter(() => Math.random() > 0.8),
+          fix_versions: getRandomSubset(VERSIONS).map(name => ({ name })),
+          story_points: Math.random() > 0.3 ? getRandomElement([1, 2, 3, 5, 8, 13]) : null, // Story Points
+          sprint_names: getRandomSubset(SPRINTS).map(s => s.name),
+          time_original_estimate_hours: Math.random() > 0.3 ? ((Math.random() * 16) + 1) : null,
+          time_spent_hours: time_spent_seconds ? time_spent_seconds / 3600 : null,
+
+          // These are not standard Jira fields but calculated for our dashboard
+          lead_time_days,
+          cycle_time_days: cycle_time_days && cycle_time_days > 0 ? cycle_time_days : null,
+          sla_met: Math.random() > 0.3 ? true : false,
+          budget: Math.random() > 0.4 ? Math.random() * 5000 + 1000 : null,
+          labor_cost,
+          other_expenses,
+          actual_cost: (labor_cost || 0) + other_expenses,
+          revenue: Math.random() > 0.6 ? Math.random() * 10000 : null,
           changelog: createChangelog(createdDate, resolvedDate, statusName),
         });
       }

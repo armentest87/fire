@@ -15,33 +15,37 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, Calendar as CalendarIcon, Wand2 } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Wand2, Check, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { visualizationSuggestion } from '@/ai/flows/visualization-suggestion';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { type JiraProject } from '@/lib/types';
 
 interface FetchDataDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onFetch: (jql: string) => void;
   isFetching: boolean;
+  projects: JiraProject[];
 }
 
-export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: FetchDataDialogProps) {
+export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, projects }: FetchDataDialogProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'jql'>('basic');
   
   // State for Basic filters
-  const [projectKey, setProjectKey] = useState('PROJ');
+  const [projectKey, setProjectKey] = useState('');
   const [issueTypes, setIssueTypes] = useState('');
   const [issueStatuses, setIssueStatuses] = useState('');
   const [createdDate, setCreatedDate] = useState<Date | undefined>();
   const [updatedDate, setUpdatedDate] = useState<Date | undefined>();
+  const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
 
   // State for JQL
-  const [jql, setJql] = useState('project = PROJ ORDER BY created DESC');
+  const [jql, setJql] = useState('ORDER BY created DESC');
 
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -108,8 +112,9 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
     }
   };
 
-  const isBasicFetchDisabled = !projectKey.trim() && !issueTypes.trim() && !issueStatuses.trim() && !createdDate && !updatedDate;
+  const isBasicFetchDisabled = !projectKey.trim();
   const currentJql = activeTab === 'basic' ? constructJqlFromBasic() : jql;
+  const selectedProjectName = projects.find(p => p.key === projectKey)?.name;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -129,16 +134,51 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
             <div className="space-y-4 py-4">
                <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <Label htmlFor="project-key">Project Key</Label>
-                    <Input 
-                      id="project-key" 
-                      placeholder="E.g., PROJ" 
-                      value={projectKey}
-                      onChange={(e) => setProjectKey(e.target.value)}
-                    />
+                    <Label htmlFor="project-key">Project</Label>
+                    <Popover open={projectPopoverOpen} onOpenChange={setProjectPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={projectPopoverOpen}
+                            className="w-full justify-between"
+                            >
+                            {projectKey
+                                ? `${selectedProjectName} (${projectKey})`
+                                : "Select project..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[270px] p-0">
+                            <Command>
+                            <CommandInput placeholder="Search project..." />
+                            <CommandEmpty>No project found.</CommandEmpty>
+                            <CommandGroup>
+                                {projects.map((project) => (
+                                <CommandItem
+                                    key={project.key}
+                                    value={project.key}
+                                    onSelect={(currentValue) => {
+                                      setProjectKey(currentValue.toUpperCase() === projectKey ? "" : currentValue.toUpperCase())
+                                      setProjectPopoverOpen(false)
+                                    }}
+                                >
+                                    <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        projectKey === project.key ? "opacity-100" : "opacity-0"
+                                    )}
+                                    />
+                                    {project.name} ({project.key})
+                                </CommandItem>
+                                ))}
+                            </CommandGroup>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                   </div>
                    <div className="space-y-2">
-                    <Label htmlFor="issue-types">Issue Types</Label>
+                    <Label htmlFor="issue-types">Issue Types (optional)</Label>
                     <Input 
                       id="issue-types" 
                       placeholder="Bug, Story, Task" 
@@ -148,7 +188,7 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
                   </div>
                </div>
                <div className="space-y-2">
-                <Label htmlFor="issue-statuses">Issue Statuses</Label>
+                <Label htmlFor="issue-statuses">Issue Statuses (optional)</Label>
                 <Input 
                   id="issue-statuses" 
                   placeholder="To Do, In Progress" 
@@ -158,7 +198,7 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>Created After</Label>
+                    <Label>Created After (optional)</Label>
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -183,7 +223,7 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching }: F
                     </Popover>
                 </div>
                  <div className="space-y-2">
-                    <Label>Updated After</Label>
+                    <Label>Updated After (optional)</Label>
                      <Popover>
                         <PopoverTrigger asChild>
                             <Button
