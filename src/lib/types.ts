@@ -65,6 +65,7 @@ export interface JiraCredentials {
 }
 
 export interface JiraProject {
+  id: string;
   key: string;
   name: string;
 }

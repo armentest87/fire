@@ -163,7 +163,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             )}
             {filteredIssues && CurrentTabComponent ? (
                 <div className="animate-fade-in">
-                  <CurrentTabComponent issues={filteredIssues} />
+                  <CurrentTabComponent issues={filteredIssues} projects={projects} />
                 </div>
               ) : (
                  !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />

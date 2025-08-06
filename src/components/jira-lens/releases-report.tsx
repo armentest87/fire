@@ -1,13 +1,13 @@
 'use client';
-import { type JiraIssue } from "@/lib/types";
+import { type JiraIssue, type JiraProject } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "../ui/table";
 import { Badge } from "../ui/badge";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, ChartOptions } from 'chart.js';
-import { eachDayOfInterval, format, parseISO, startOfDay, eachMonthOfInterval, startOfMonth } from 'date-fns';
+import { eachDayOfInterval, format, parseISO } from 'date-fns';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
@@ -52,7 +52,7 @@ const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
         const validIssues = issues.filter(i => i.created);
         if (validIssues.length === 0) return { labels: [], datasets: [] };
 
-        const dates = validIssues.map(i => parseISO(i.created));
+        const dates = validIssues.map(i => parseISO(i.created!));
         const dateRange = eachDayOfInterval({ start: new Date(Math.min(...dates.map(d => d.getTime()))), end: new Date(Math.max(...dates.map(d => d.getTime()))) });
 
         dateRange.forEach(day => {
@@ -61,6 +61,7 @@ const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
         });
 
         validIssues.forEach(issue => {
+            if (!issue.created || !issue.issuetype?.name) return;
             const dayString = format(parseISO(issue.created), 'yyyy-MM-dd');
             const type = issue.issuetype.name === 'Bug' ? 'Bug' : 'Task';
             if (dailyData[dayString]) {
@@ -99,8 +100,8 @@ const CumulativeIssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
         const validIssues = issues.filter(i => i.created);
         if (validIssues.length === 0) return { labels: [], datasets: [] };
 
-        const sortedIssues = validIssues.sort((a,b) => parseISO(a.created).getTime() - parseISO(b.created).getTime());
-        const labels = sortedIssues.map(i => format(parseISO(i.created), 'yyyy-MM-dd'));
+        const sortedIssues = validIssues.sort((a,b) => parseISO(a.created!).getTime() - parseISO(b.created!).getTime());
+        const labels = sortedIssues.map(i => format(parseISO(i.created!), 'yyyy-MM-dd'));
         const cumulativeData = sortedIssues.map((_, index) => index + 1);
 
         return {
@@ -176,16 +177,16 @@ const DetailedReleaseTable = ({ issues }: { issues: JiraIssue[] }) => {
                                 <TableRow key={issue.key}>
                                     {index === 0 && <TableCell rowSpan={release.issues.length} className="font-semibold align-top">{release.version}</TableCell>}
                                     <TableCell>{issue.key}</TableCell>
-                                    <TableCell>{issue.assignee?.displayName}</TableCell>
+                                    <TableCell>{issue.assignee?.displayName || 'Unassigned'}</TableCell>
                                     <TableCell className="text-right">{issue.time_spent_hours?.toFixed(1) || 'N/A'}</TableCell>
                                     <TableCell>
                                         <Badge variant={issue.issuetype.name === 'Bug' ? 'destructive' : 'secondary'}>
-                                            {issue.issuetype.name}
+                                            {issue.issuetype.name || 'Task'}
                                         </Badge>
                                     </TableCell>
                                      <TableCell>
                                         <Badge variant={issue.status.statusCategory.name === 'Done' ? 'default' : 'outline'}>
-                                            {issue.status.name}
+                                            {issue.status.name || 'To Do'}
                                         </Badge>
                                     </TableCell>
                                 </TableRow>
@@ -198,7 +199,25 @@ const DetailedReleaseTable = ({ issues }: { issues: JiraIssue[] }) => {
     );
 };
 
-export function ReleasesReport({ issues }: { issues: JiraIssue[] }) {
+export function ReleasesReport({ issues, projects }: { issues: JiraIssue[], projects: JiraProject[] }) {
+    
+    const [selectedProject, setSelectedProject] = useState<string>('all');
+    
+    const filteredIssues = useMemo(() => {
+        if (selectedProject === 'all') return issues;
+        const projectKey = projects.find(p => p.id === selectedProject)?.key;
+        if (!projectKey) return issues;
+        return issues.filter(issue => issue.key.startsWith(`${projectKey}-`));
+    }, [issues, selectedProject, projects]);
+
+    const uniqueFixVersions = useMemo(() => {
+        const versions = new Set<string>();
+        filteredIssues.forEach(issue => {
+            issue.fix_versions?.forEach(v => versions.add(v.name));
+        });
+        return Array.from(versions).sort();
+    }, [filteredIssues]);
+
     if (!issues || issues.length === 0) {
         return <p>No issue data to display for Releases Report.</p>;
     }
@@ -208,43 +227,31 @@ export function ReleasesReport({ issues }: { issues: JiraIssue[] }) {
             <div className="flex flex-col md:flex-row gap-4 justify-between md:items-center">
                  <h2 className="text-xl font-bold">Releases Report</h2>
                 <div className="flex flex-wrap gap-4">
-                     <Select defaultValue="all-projects">
+                     <Select value={selectedProject} onValueChange={setSelectedProject}>
                         <SelectTrigger className="w-48"><SelectValue placeholder="Select Projects" /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all-projects">BI Cloud & Server</SelectItem>
+                            <SelectItem value="all">All Projects</SelectItem>
+                             {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                      <Select defaultValue="all-versions">
                         <SelectTrigger className="w-48"><SelectValue placeholder="Select Version" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all-versions">All Versions</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Select defaultValue="released">
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Release Status" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="released">Released</SelectItem>
-                            <SelectItem value="unreleased">Unreleased</SelectItem>
-                        </SelectContent>
-                    </Select>
-                     <Select defaultValue="not-archived">
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Archived Status" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="not-archived">Not Archived</SelectItem>
-                             <SelectItem value="archived">Archived</SelectItem>
+                            {uniqueFixVersions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                 <IssuesByTypeDonut issues={issues} />
-                 <IssuesOverTimeChart issues={issues} />
-                 <CumulativeIssuesOverTimeChart issues={issues} />
+                 <IssuesByTypeDonut issues={filteredIssues} />
+                 <IssuesOverTimeChart issues={filteredIssues} />
+                 <CumulativeIssuesOverTimeChart issues={filteredIssues} />
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-                <DetailedReleaseTable issues={issues} />
+                <DetailedReleaseTable issues={filteredIssues} />
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 'use client';
-import { type JiraIssue } from "@/lib/types";
+import { type JiraIssue, type JiraProject } from "@/lib/types";
 import { useState, useMemo }from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -140,8 +140,9 @@ const TimeworkMatrixTable = ({issues}: {issues: JiraIssue[]}) => {
 
 const years = ['2024', '2023', '2022', '2021', '2020', '2019'];
 
-export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
+export function TimeworkReport({ issues, projects }: { issues: JiraIssue[], projects: JiraProject[] }) {
     const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set(['2024','2023']));
+    const [selectedProject, setSelectedProject] = useState('all');
 
     const handleYearChange = (year: string) => {
         setSelectedYears(prev => {
@@ -155,11 +156,29 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
         })
     }
     
+    const filteredIssues = useMemo(() => {
+        let yearFiltered = issues.filter(i => {
+            if (!i.updated) return false;
+            const year = format(parseISO(i.updated), 'yyyy');
+            return selectedYears.has(year);
+        });
+        
+        if (selectedProject === 'all') {
+            return yearFiltered;
+        }
+
+        const projectKey = projects.find(p => p.id === selectedProject)?.key;
+        if (!projectKey) return yearFiltered;
+        
+        return yearFiltered.filter(i => i.key.startsWith(`${projectKey}-`));
+
+    }, [issues, selectedProject, selectedYears, projects]);
+
     const kpis = useMemo(() => {
-        const totalHours = issues.reduce((sum, issue) => sum + (issue.time_spent_hours || 0), 0);
+        const totalHours = filteredIssues.reduce((sum, issue) => sum + (issue.time_spent_hours || 0), 0);
         
         const uniqueDaysWithTime = new Set(
-            issues.filter(i => (i.time_spent_hours || 0) > 0 && i.updated).map(i => i.updated!.split('T')[0])
+            filteredIssues.filter(i => (i.time_spent_hours || 0) > 0 && i.updated).map(i => i.updated!.split('T')[0])
         ).size;
 
         const averageHours = uniqueDaysWithTime > 0 ? totalHours / uniqueDaysWithTime : 0;
@@ -174,7 +193,7 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
             totalHoursWorked: formatHours(totalHours),
             averageHoursPerDay: formatHours(averageHours)
         }
-    }, [issues]);
+    }, [filteredIssues]);
 
     return (
        <div className="space-y-6">
@@ -185,12 +204,13 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
                     <Card>
                         <CardHeader><CardTitle className="text-base">Choose Project</CardTitle></CardHeader>
                         <CardContent>
-                             <Select defaultValue="all">
+                             <Select value={selectedProject} onValueChange={setSelectedProject}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select Project" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">BI Cloud apps</SelectItem>
+                                    <SelectItem value="all">All Projects</SelectItem>
+                                    {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </CardContent>
@@ -217,10 +237,10 @@ export function TimeworkReport({ issues }: { issues: JiraIssue[] }) {
                 {/* Main Content Column */}
                 <div className="lg:col-span-4 space-y-6">
                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                       <HoursByUserChart issues={issues} />
-                       <WorktimeByDateChart issues={issues} />
+                       <HoursByUserChart issues={filteredIssues} />
+                       <WorktimeByDateChart issues={filteredIssues} />
                    </div>
-                    <TimeworkMatrixTable issues={issues} />
+                    <TimeworkMatrixTable issues={filteredIssues} />
                 </div>
 
             </div>
