@@ -61,7 +61,6 @@ const TimeSpentByTypeChart = ({issues}: {issues: JiraIssue[]}) => {
             </CardContent>
         </Card>
     )
-
 }
 
 export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; allIssues: JiraIssue[] }) {
@@ -123,8 +122,8 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
     const historicalVelocityData = useMemo(() => {
         const velocityBySprint: Record<string, number> = {};
         sprints.forEach(sprint => {
-            const aSprintIssues = allIssues.filter(issue => issue.sprint_names?.includes(sprint) && issue.status?.statusCategory?.name === 'Done');
-            velocityBySprint[sprint] = aSprintIssues.reduce((sum, i) => sum + (i.story_points || 0), 0);
+            const sprintIssuesForVelocity = allIssues.filter(issue => issue.sprint_names?.includes(sprint) && issue.status?.statusCategory?.name === 'Done');
+            velocityBySprint[sprint] = sprintIssuesForVelocity.reduce((sum, i) => sum + (i.story_points || 0), 0);
         });
         const labels = Object.keys(velocityBySprint);
         return {
@@ -196,7 +195,7 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
             </div>
            
             {selectedSprint && sprintData ? (
-                <div className="space-y-6">
+                <div className="space-y-6 animate-fade-in">
                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
                         <KpiCard title="Start Date" value="02.08.2023" />
                         <KpiCard title="End Date" value="17.08.2023" />
@@ -251,8 +250,11 @@ export function SprintAnalysis({ issues, allIssues }: { issues: JiraIssue[]; all
                     </div>
                 </div>
             ) : (
-                 <div className="text-center p-8">
-                    <p className="text-muted-foreground">Select a sprint to see the detailed analysis.</p>
+                 <div className="flex items-center justify-center h-full p-8 bg-card rounded-lg shadow-md border">
+                    <div className="text-center">
+                        <h2 className="text-2xl font-semibold mb-2">No Sprint Selected</h2>
+                        <p className="text-muted-foreground">Select a sprint from the dropdown to see the detailed analysis.</p>
+                    </div>
                  </div>
             )}
         </div>
