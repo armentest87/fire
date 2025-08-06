@@ -29,7 +29,7 @@ export interface JiraIssue {
   
   // Standard custom fields (IDs can vary)
   story_points: number | null; // Example: Story Points
-  sprint_names: string[] | null;
+  sprint_names: string[];
 
   // Time tracking (in seconds)
   time_original_estimate_hours: number | null;

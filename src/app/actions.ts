@@ -34,8 +34,6 @@ export async function fetchJiraProjects(credentials: JiraCredentials): Promise<J
             id: project.id,
             key: project.key,
             name: project.name,
-            avatarUrls: project.avatarUrls,
-            projectTypeKey: project.projectTypeKey,
         }));
         return projects;
     } catch (error) {
