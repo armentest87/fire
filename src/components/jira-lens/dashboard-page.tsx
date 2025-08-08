@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { type JiraIssue, type JiraCredentials, type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -84,7 +84,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     }
   };
 
-  const handleProjectMetaFetch = async (projectId: string) => {
+  const handleProjectMetaFetch = useCallback(async (projectId: string) => {
     if (!projectId) {
       setIssueTypes([]);
       setStatuses([]);
@@ -104,7 +104,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         variant: "destructive",
       });
     }
-  }
+  }, [credentials, toast]);
 
   const uniqueFilterOptions = useMemo(() => {
     if (!allIssues) return { assignees: [], statuses: [], issueTypes: [], priorities: [] };
