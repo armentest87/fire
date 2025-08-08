@@ -3,9 +3,11 @@ export interface JiraIssue {
   key: string;
   summary: string;
   issuetype: {
+    id: string;
     name: string;
   };
   status: {
+    id: string;
     name: string;
     statusCategory: {
       name: 'To Do' | 'In Progress' | 'Done';
@@ -68,4 +70,23 @@ export interface JiraProject {
   id: string;
   key: string;
   name: string;
+}
+
+
+export interface JiraIssueType {
+  id: string;
+  name: string;
+  description: string;
+  iconUrl: string;
+  subtask: boolean;
+}
+
+export interface JiraStatus {
+  id: string;
+  name: string;
+  description: string;
+  iconUrl: string;
+  statusCategory: {
+    name: string;
+  }
 }

@@ -1,7 +1,7 @@
 
 'use server';
 
-import { type JiraIssue, type JiraProject, type JiraCredentials } from '@/lib/types';
+import { type JiraIssue, type JiraProject, type JiraCredentials, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import fetch from 'node-fetch';
 
 async function jiraFetch(url: string, credentials: JiraCredentials) {
@@ -41,6 +41,40 @@ export async function fetchJiraProjects(credentials: JiraCredentials): Promise<J
         throw new Error("Could not fetch projects. Please check your Jira URL, credentials, and permissions.");
     }
 }
+
+export async function fetchJiraIssueTypes(credentials: JiraCredentials, projectId: string): Promise<JiraIssueType[]> {
+    const fullUrl = `${credentials.url}/rest/api/3/issuetype/project?projectId=${projectId}`;
+    try {
+        const data = await jiraFetch(fullUrl, credentials) as JiraIssueType[];
+        return data.sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+        console.error(`Failed to fetch issue types for project ${projectId}:`, error);
+        throw new Error("Could not fetch issue types.");
+    }
+}
+
+
+export async function fetchJiraStatuses(credentials: JiraCredentials, projectId: string): Promise<JiraStatus[]> {
+    const fullUrl = `${credentials.url}/rest/api/3/project/${projectId}/statuses`;
+    try {
+        const data = await jiraFetch(fullUrl, credentials) as any[];
+        // The API returns a list of issue types, each with its own list of statuses.
+        // We need to flatten this into a single list of unique statuses.
+        const allStatuses: Record<string, JiraStatus> = {};
+        data.forEach((issueType: any) => {
+            issueType.statuses.forEach((status: JiraStatus) => {
+                if (!allStatuses[status.id]) {
+                    allStatuses[status.id] = status;
+                }
+            });
+        });
+        return Object.values(allStatuses).sort((a,b) => a.name.localeCompare(b.name));
+    } catch (error) {
+        console.error(`Failed to fetch statuses for project ${projectId}:`, error);
+        throw new Error("Could not fetch statuses.");
+    }
+}
+
 
 // Helper to parse the complex sprint string from Jira custom fields.
 // It handles two common formats: an array of objects or an array of strings.
@@ -94,9 +128,11 @@ function transformJiraIssue(issue: any): JiraIssue {
         key: issue.key,
         summary: issue.fields.summary,
         issuetype: {
+            id: issue.fields.issuetype?.id,
             name: issue.fields.issuetype?.name || 'N/A',
         },
         status: {
+            id: issue.fields.status?.id,
             name: issue.fields.status?.name || 'N/A',
             statusCategory: {
                 name: issue.fields.status?.statusCategory?.name || 'To Do',

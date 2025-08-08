@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { type JiraIssue, type JiraCredentials, type JiraProject } from '@/lib/types';
+import { type JiraIssue, type JiraCredentials, type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { LogOut, Loader2 } from 'lucide-react';
-import { fetchJiraData, fetchJiraProjects } from '@/app/actions';
+import { fetchJiraData, fetchJiraProjects, fetchJiraIssueTypes, fetchJiraStatuses } from '@/app/actions';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
@@ -29,6 +29,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [allIssues, setAllIssues] = useState<JiraIssue[] | null>(null);
   const [filteredIssues, setFilteredIssues] = useState<JiraIssue[] | null>(null);
   const [projects, setProjects] = useState<JiraProject[]>([]);
+  const [issueTypes, setIssueTypes] = useState<JiraIssueType[]>([]);
+  const [statuses, setStatuses] = useState<JiraStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [isFetchDialogOpen, setIsFetchDialogOpen] = useState(false);
@@ -81,6 +83,28 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       setIsFetchDialogOpen(false);
     }
   };
+
+  const handleProjectMetaFetch = async (projectId: string) => {
+    if (!projectId) {
+      setIssueTypes([]);
+      setStatuses([]);
+      return;
+    }
+    try {
+      const [types, projectStatuses] = await Promise.all([
+        fetchJiraIssueTypes(credentials, projectId),
+        fetchJiraStatuses(credentials, projectId)
+      ]);
+      setIssueTypes(types);
+      setStatuses(projectStatuses);
+    } catch (error) {
+       toast({
+        title: "Error fetching project details",
+        description: error instanceof Error ? error.message : "Could not load issue types or statuses.",
+        variant: "destructive",
+      });
+    }
+  }
 
   const uniqueFilterOptions = useMemo(() => {
     if (!allIssues) return { assignees: [], statuses: [], issueTypes: [], priorities: [] };
@@ -141,6 +165,9 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               onFetch={handleFetch}
               isFetching={isFetchingIssues}
               projects={projects}
+              issueTypes={issueTypes}
+              statuses={statuses}
+              onProjectChange={handleProjectMetaFetch}
             />
 
             <Button variant="ghost" size="icon" onClick={onLogout}>

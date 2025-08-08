@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,10 +17,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, Calendar as CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { Loader2, Calendar as CalendarIcon, Check, ChevronsUpDown, X } from 'lucide-react';
+import { format, sub, set } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { type JiraProject } from '@/lib/types';
+import { type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
+import { Checkbox } from '../ui/checkbox';
+import { ScrollArea } from '../ui/scroll-area';
+import { Badge } from '../ui/badge';
+
 
 interface FetchDataDialogProps {
   isOpen: boolean;
@@ -28,15 +32,17 @@ interface FetchDataDialogProps {
   onFetch: (jql: string) => void;
   isFetching: boolean;
   projects: JiraProject[];
+  issueTypes: JiraIssueType[];
+  statuses: JiraStatus[];
+  onProjectChange: (projectId: string) => void;
 }
 
-export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, projects }: FetchDataDialogProps) {
+export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, projects, issueTypes, statuses, onProjectChange }: FetchDataDialogProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'jql'>('basic');
   
-  // State for Basic filters
-  const [projectKey, setProjectKey] = useState('');
-  const [issueTypes, setIssueTypes] = useState('');
-  const [issueStatuses, setIssueStatuses] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [selectedIssueTypes, setSelectedIssueTypes] = useState<Set<string>>(new Set());
+  const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
   const [createdDate, setCreatedDate] = useState<Date | undefined>();
   const [updatedDate, setUpdatedDate] = useState<Date | undefined>();
   const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
@@ -44,18 +50,28 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
   // State for JQL
   const [jql, setJql] = useState('ORDER BY created DESC');
 
+  useEffect(() => {
+    onProjectChange(projectId);
+    setSelectedIssueTypes(new Set());
+    setSelectedStatuses(new Set());
+  }, [projectId, onProjectChange]);
+
   const constructJqlFromBasic = () => {
     const parts: string[] = [];
-    if (projectKey) {
-        parts.push(`project = "${projectKey.trim()}"`);
+    if (projectId) {
+        const projectKey = projects.find(p => p.id === projectId)?.key;
+        if(projectKey) parts.push(`project = "${projectKey.trim()}"`);
     }
-    if (issueTypes) {
-        const types = issueTypes.split(',').map(t => `"${t.trim()}"`).join(', ');
+    if (selectedIssueTypes.size > 0) {
+        const types = Array.from(selectedIssueTypes).map(t => `"${t}"`).join(', ');
         parts.push(`issuetype IN (${types})`);
     }
-    if (issueStatuses) {
-        const statuses = issueStatuses.split(',').map(s => `"${s.trim()}"`).join(', ');
-        parts.push(`status IN (${statuses})`);
+    if (selectedStatuses.size > 0) {
+        const statusNames = Array.from(selectedStatuses).map(id => statuses.find(s => s.id === id)?.name).filter(Boolean);
+        if(statusNames.length > 0) {
+          const statusesJql = statusNames.map(s => `"${s}"`).join(', ');
+          parts.push(`status IN (${statusesJql})`);
+        }
     }
     if (createdDate) {
         parts.push(`created >= "${format(createdDate, 'yyyy-MM-dd')}"`);
@@ -64,7 +80,8 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
         parts.push(`updated >= "${format(updatedDate, 'yyyy-MM-dd')}"`);
     }
 
-    return parts.join(' AND ');
+    const query = parts.join(' AND ');
+    return query ? `${query} ORDER BY created DESC` : 'ORDER BY created DESC';
   };
 
   const handleFetchClick = () => {
@@ -76,8 +93,23 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
     }
   };
 
-  const isBasicFetchDisabled = !projectKey.trim();
-  const selectedProjectName = projects.find(p => p.key === projectKey)?.name;
+  const setDateRange = (duration: Duration) => {
+    const now = new Date();
+    setCreatedDate(sub(now, duration));
+  }
+
+  const toggleSetItem = (set: Set<string>, item: string) => {
+      const newSet = new Set(set);
+      if (newSet.has(item)) {
+          newSet.delete(item);
+      } else {
+          newSet.add(item);
+      }
+      return newSet;
+  };
+
+  const isBasicFetchDisabled = !projectId.trim();
+  const selectedProjectName = projects.find(p => p.id === projectId)?.name;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -106,8 +138,8 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                             aria-expanded={projectPopoverOpen}
                             className="w-full justify-between"
                             >
-                            {projectKey && selectedProjectName
-                                ? `${selectedProjectName} (${projectKey})`
+                            {projectId && selectedProjectName
+                                ? `${selectedProjectName}`
                                 : "Select project..."}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
@@ -120,17 +152,17 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                                 <CommandGroup>
                                     {projects.map((project) => (
                                     <CommandItem
-                                        key={project.key}
-                                        value={project.key}
-                                        onSelect={(currentValue) => {
-                                          setProjectKey(currentValue === projectKey ? "" : currentValue)
+                                        key={project.id}
+                                        value={project.name}
+                                        onSelect={() => {
+                                          setProjectId(project.id)
                                           setProjectPopoverOpen(false)
                                         }}
                                     >
                                         <Check
                                         className={cn(
                                             "mr-2 h-4 w-4",
-                                            projectKey === project.key ? "opacity-100" : "opacity-0"
+                                            projectId === project.id ? "opacity-100" : "opacity-0"
                                         )}
                                         />
                                         {project.name} ({project.key})
@@ -144,26 +176,64 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                   </div>
                    <div className="space-y-2">
                     <Label htmlFor="issue-types">Issue Types (optional)</Label>
-                    <Input 
-                      id="issue-types" 
-                      placeholder="Bug, Story, Task" 
-                      value={issueTypes}
-                      onChange={(e) => setIssueTypes(e.target.value)}
-                    />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                           <Button variant="outline" className="w-full justify-start font-normal" disabled={!projectId || issueTypes.length === 0}>
+                              {selectedIssueTypes.size > 0 ? `${selectedIssueTypes.size} selected` : "Select issue types..."}
+                           </Button>
+                        </PopoverTrigger>
+                         <PopoverContent className="w-[270px] p-0" align="start">
+                            <Command>
+                                <CommandInput placeholder="Filter types..." />
+                                <CommandList>
+                                    <CommandEmpty>No types found.</CommandEmpty>
+                                    <CommandGroup>
+                                        <ScrollArea className="h-48">
+                                          {issueTypes.map(it => (
+                                              <CommandItem key={it.id} onSelect={() => setSelectedIssueTypes(s => toggleSetItem(s, it.name))}>
+                                                <Checkbox className="mr-2" checked={selectedIssueTypes.has(it.name)} />
+                                                <span>{it.name}</span>
+                                              </CommandItem>
+                                          ))}
+                                        </ScrollArea>
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                         </PopoverContent>
+                      </Popover>
                   </div>
                </div>
                <div className="space-y-2">
                 <Label htmlFor="issue-statuses">Issue Statuses (optional)</Label>
-                <Input 
-                  id="issue-statuses" 
-                  placeholder="To Do, In Progress" 
-                  value={issueStatuses}
-                  onChange={(e) => setIssueStatuses(e.target.value)}
-                />
+                 <Popover>
+                    <PopoverTrigger asChild>
+                       <Button variant="outline" className="w-full justify-start font-normal" disabled={!projectId || statuses.length === 0}>
+                          {selectedStatuses.size > 0 ? `${selectedStatuses.size} selected` : "Select statuses..."}
+                       </Button>
+                    </PopoverTrigger>
+                     <PopoverContent className="w-[560px] p-0" align="start">
+                        <Command>
+                            <CommandInput placeholder="Filter statuses..." />
+                            <CommandList>
+                                <CommandEmpty>No statuses found.</CommandEmpty>
+                                <CommandGroup>
+                                    <ScrollArea className="h-48">
+                                      {statuses.map(st => (
+                                          <CommandItem key={st.id} onSelect={() => setSelectedStatuses(s => toggleSetItem(s, st.id))}>
+                                            <Checkbox className="mr-2" checked={selectedStatuses.has(st.id)} />
+                                            <span>{st.name}</span>
+                                          </CommandItem>
+                                      ))}
+                                    </ScrollArea>
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                     </PopoverContent>
+                  </Popover>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label>Created After (optional)</Label>
+              <div className="space-y-2">
+                  <Label>Created After (optional)</Label>
+                  <div className="flex gap-2">
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -186,32 +256,16 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                             />
                         </PopoverContent>
                     </Popover>
-                </div>
-                 <div className="space-y-2">
-                    <Label>Updated After (optional)</Label>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !updatedDate && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {updatedDate ? format(updatedDate, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                                mode="single"
-                                selected={updatedDate}
-                                onSelect={setUpdatedDate}
-                                initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                </div>
+                     {createdDate && <Button variant="ghost" size="icon" onClick={() => setCreatedDate(undefined)}><X className="h-4 w-4"/></Button>}
+                  </div>
+                  <div className="flex gap-1 pt-1">
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ weeks: 1 })}>1w</Button>
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 1 })}>1m</Button>
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 3 })}>3m</Button>
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 6 })}>6m</Button>
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ years: 1 })}>1y</Button>
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ years: 2 })}>2y</Button>
+                  </div>
               </div>
             </div>
           </TabsContent>
