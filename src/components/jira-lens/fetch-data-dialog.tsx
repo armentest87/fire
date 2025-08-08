@@ -18,12 +18,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Calendar } from '@/components/ui/calendar';
 import { Loader2, Calendar as CalendarIcon, Check, ChevronsUpDown, X } from 'lucide-react';
-import { format, sub, set } from 'date-fns';
+import { format, sub } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { ScrollArea } from '../ui/scroll-area';
-import { Badge } from '../ui/badge';
 
 
 interface FetchDataDialogProps {
@@ -36,6 +35,16 @@ interface FetchDataDialogProps {
   statuses: JiraStatus[];
   onProjectChange: (projectId: string) => void;
 }
+
+const MultiSelectItem = ({ label, isSelected, onToggle }: { label: string, isSelected: boolean, onToggle: () => void }) => (
+    <CommandItem onSelect={onToggle} className="cursor-pointer">
+        <div className="flex items-center gap-2 w-full" onClick={onToggle}>
+            <Checkbox checked={isSelected} />
+            <span>{label}</span>
+        </div>
+    </CommandItem>
+);
+
 
 export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, projects, issueTypes, statuses, onProjectChange }: FetchDataDialogProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'jql'>('basic');
@@ -51,9 +60,11 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
   const [jql, setJql] = useState('ORDER BY created DESC');
 
   useEffect(() => {
-    onProjectChange(projectId);
-    setSelectedIssueTypes(new Set());
-    setSelectedStatuses(new Set());
+    if(projectId) {
+      onProjectChange(projectId);
+      setSelectedIssueTypes(new Set());
+      setSelectedStatuses(new Set());
+    }
   }, [projectId, onProjectChange]);
 
   const constructJqlFromBasic = () => {
@@ -93,9 +104,9 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
     }
   };
 
-  const setDateRange = (duration: Duration) => {
+  const setDateRange = (duration: Duration, dateSetter: React.Dispatch<React.SetStateAction<Date | undefined>>) => {
     const now = new Date();
-    setCreatedDate(sub(now, duration));
+    dateSetter(sub(now, duration));
   }
 
   const toggleSetItem = (set: Set<string>, item: string) => {
@@ -129,7 +140,7 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
             <div className="space-y-4 py-4">
                <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <Label htmlFor="project-key">Project</Label>
+                    <Label htmlFor="project-key">Project *</Label>
                     <Popover open={projectPopoverOpen} onOpenChange={setProjectPopoverOpen}>
                         <PopoverTrigger asChild>
                             <Button
@@ -190,10 +201,12 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                                     <CommandGroup>
                                         <ScrollArea className="h-48">
                                           {issueTypes.map(it => (
-                                              <CommandItem key={it.id} onSelect={() => setSelectedIssueTypes(s => toggleSetItem(s, it.name))}>
-                                                <Checkbox className="mr-2" checked={selectedIssueTypes.has(it.name)} />
-                                                <span>{it.name}</span>
-                                              </CommandItem>
+                                             <MultiSelectItem
+                                                key={it.id}
+                                                label={it.name}
+                                                isSelected={selectedIssueTypes.has(it.name)}
+                                                onToggle={() => setSelectedIssueTypes(s => toggleSetItem(s, it.name))}
+                                              />
                                           ))}
                                         </ScrollArea>
                                     </CommandGroup>
@@ -219,10 +232,12 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                                 <CommandGroup>
                                     <ScrollArea className="h-48">
                                       {statuses.map(st => (
-                                          <CommandItem key={st.id} onSelect={() => setSelectedStatuses(s => toggleSetItem(s, st.id))}>
-                                            <Checkbox className="mr-2" checked={selectedStatuses.has(st.id)} />
-                                            <span>{st.name}</span>
-                                          </CommandItem>
+                                          <MultiSelectItem
+                                            key={st.id}
+                                            label={st.name}
+                                            isSelected={selectedStatuses.has(st.id)}
+                                            onToggle={() => setSelectedStatuses(s => toggleSetItem(s, st.id))}
+                                          />
                                       ))}
                                     </ScrollArea>
                                 </CommandGroup>
@@ -231,41 +246,79 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
                      </PopoverContent>
                   </Popover>
               </div>
-              <div className="space-y-2">
-                  <Label>Created After (optional)</Label>
-                  <div className="flex gap-2">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !createdDate && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {createdDate ? format(createdDate, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                                mode="single"
-                                selected={createdDate}
-                                onSelect={setCreatedDate}
-                                initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                     {createdDate && <Button variant="ghost" size="icon" onClick={() => setCreatedDate(undefined)}><X className="h-4 w-4"/></Button>}
-                  </div>
-                  <div className="flex gap-1 pt-1">
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ weeks: 1 })}>1w</Button>
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 1 })}>1m</Button>
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 3 })}>3m</Button>
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 6 })}>6m</Button>
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ years: 1 })}>1y</Button>
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ years: 2 })}>2y</Button>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <Label>Created After (optional)</Label>
+                    <div className="flex gap-2">
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !createdDate && "text-muted-foreground"
+                                  )}
+                              >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {createdDate ? format(createdDate, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                  mode="single"
+                                  selected={createdDate}
+                                  onSelect={setCreatedDate}
+                                  initialFocus
+                              />
+                          </PopoverContent>
+                      </Popover>
+                       {createdDate && <Button variant="ghost" size="icon" onClick={() => setCreatedDate(undefined)}><X className="h-4 w-4"/></Button>}
+                    </div>
+                    <div className="flex gap-1 pt-1">
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ weeks: 1 }, setCreatedDate)}>1w</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 1 }, setCreatedDate)}>1m</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 3 }, setCreatedDate)}>3m</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 6 }, setCreatedDate)}>6m</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ years: 1 }, setCreatedDate)}>1y</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ years: 2 }, setCreatedDate)}>2y</Button>
+                    </div>
+                 </div>
+                 <div className="space-y-2">
+                    <Label>Updated After (optional)</Label>
+                    <div className="flex gap-2">
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !updatedDate && "text-muted-foreground"
+                                  )}
+                              >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {updatedDate ? format(updatedDate, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                  mode="single"
+                                  selected={updatedDate}
+                                  onSelect={setUpdatedDate}
+                                  initialFocus
+                              />
+                          </PopoverContent>
+                      </Popover>
+                       {updatedDate && <Button variant="ghost" size="icon" onClick={() => setUpdatedDate(undefined)}><X className="h-4 w-4"/></Button>}
+                    </div>
+                    <div className="flex gap-1 pt-1">
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ weeks: 1 }, setUpdatedDate)}>1w</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 1 }, setUpdatedDate)}>1m</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 3 }, setUpdatedDate)}>3m</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 6 }, setUpdatedDate)}>6m</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ years: 1 }, setUpdatedDate)}>1y</Button>
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ years: 2 }, setUpdatedDate)}>2y</Button>
+                    </div>
+                 </div>
               </div>
             </div>
           </TabsContent>
