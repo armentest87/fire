@@ -4,45 +4,59 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { useIsMobile } from "@/hooks/use-mobile";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const PRIORITY_COLORS: Record<string, string> = {
-    'Highest': '#fb8500',
-    'High': '#ffb703',
-    'Medium': '#219ebc',
+    'Highest': '#d90429',
+    'High': '#fb8500',
+    'Medium': '#ffb703',
     'Low': '#8ecae6',
-    'Lowest': '#a8dadc',
+    'Lowest': '#219ebc',
+    'Critical': '#d90429',
+    'Major': '#fb8500',
+    'Minor': '#8ecae6',
+    'Trivial': '#a8dadc',
 };
 
+const PRIORITY_ORDER = ['Highest', 'High', 'Medium', 'Low', 'Lowest', 'Critical', 'Major', 'Minor', 'Trivial'];
+
 export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
-  const isMobile = useIsMobile();
-  const chartData = useMemo(() => {
+  const { chartData, priorityList, totalIssues } = useMemo(() => {
     const priorityCounts = issues.reduce((acc, issue) => {
       const priority = issue.priority?.name || 'No Priority';
       acc[priority] = (acc[priority] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const labels = Object.keys(priorityCounts).sort((a,b) => Object.keys(PRIORITY_COLORS).indexOf(a) - Object.keys(PRIORITY_COLORS).indexOf(b));
+    const labels = Object.keys(priorityCounts).sort((a,b) => PRIORITY_ORDER.indexOf(a) - PRIORITY_ORDER.indexOf(b));
     const data = labels.map(label => priorityCounts[label]);
     const backgroundColor = labels.map(label => PRIORITY_COLORS[label] || '#9E9E9E');
 
+    const total = issues.length;
+
+    const priorityList = labels.map(label => ({
+        label,
+        count: priorityCounts[label],
+        color: PRIORITY_COLORS[label] || '#9E9E9E',
+    }));
+
     return {
-      labels,
-      datasets: [{
-        label: 'Issues by Priority',
-        data,
-        backgroundColor,
-        borderColor: 'hsl(var(--card))',
-        borderWidth: 2,
-        hoverOffset: 4
-      }]
+      totalIssues: total,
+      priorityList,
+      chartData: {
+        labels,
+        datasets: [{
+          label: 'Issues by Priority',
+          data,
+          backgroundColor,
+          borderColor: 'hsl(var(--card))',
+          borderWidth: 2,
+          hoverOffset: 4
+        }]
+      }
     };
   }, [issues]);
-  
-  const totalIssues = issues.length;
 
   const options = {
     responsive: true,
@@ -50,12 +64,7 @@ export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
     cutout: '70%',
     plugins: {
       legend: {
-         position: isMobile ? 'top' : 'right' as const,
-         labels: {
-             boxWidth: 12,
-             padding: isMobile ? 8 : 20,
-             font: { size: 12 },
-         }
+         display: false,
       },
        tooltip: {
             callbacks: {
@@ -75,13 +84,32 @@ export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
   };
 
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle>Issues by Priority</CardTitle>
         <CardDescription>Distribution of issues across different priority levels.</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow min-h-[250px] sm:min-h-[300px]">
-         <Doughnut data={chartData} options={options as any} />
+      <CardContent className="flex-grow flex flex-col sm:flex-row items-center gap-4">
+        <div className="w-full sm:w-1/2 h-64 relative">
+             <Doughnut data={chartData} options={options as any} />
+             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                    <p className="text-3xl font-bold">{totalIssues}</p>
+                    <p className="text-sm text-muted-foreground">Total Issues</p>
+                </div>
+             </div>
+        </div>
+        <div className="w-full sm:w-1/2 space-y-2">
+            {priorityList.map(priority => (
+                <div key={priority.label} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: priority.color }}></span>
+                        <span>{priority.label}</span>
+                    </div>
+                    <span className="font-medium">{priority.count}</span>
+                </div>
+            ))}
+        </div>
       </CardContent>
     </Card>
   );
