@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartOptions } from 'chart.js';
 import { parseISO as dateFnsParseISO } from 'date-fns';
+import { ScrollArea } from "../ui/scroll-area";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -39,7 +40,7 @@ const getData = (issues: JiraIssue[], groupBy: GroupByKey) => {
     return Object.entries(grouped).map(([key, data]) => ({
         key,
         avgHours: data.totalHours / data.count,
-    })).sort((a,b) => b.avgHours - a.avgHours).slice(0, 10);
+    })).sort((a,b) => b.avgHours - a.avgHours).slice(0, 20); // Limit to top 20
 }
 
 export function TimeToResolutionChart({ issues }: { issues: JiraIssue[] }) {
@@ -69,6 +70,10 @@ export function TimeToResolutionChart({ issues }: { issues: JiraIssue[] }) {
       ],
     };
   }, [issues]);
+  
+  const barHeight = 60; // Height per assignee in pixels
+  const chartHeight = Math.max(320, chartData.labels.length * barHeight);
+
 
   const options: ChartOptions<'bar'> = {
     indexAxis: 'y' as const,
@@ -95,10 +100,14 @@ export function TimeToResolutionChart({ issues }: { issues: JiraIssue[] }) {
     <Card>
         <CardHeader>
             <CardTitle>Average Time to Resolution</CardTitle>
-            <CardDescription>Actual vs. target resolution times by assignee.</CardDescription>
+            <CardDescription>Actual vs. target resolution times by assignee (Top 20).</CardDescription>
         </CardHeader>
-        <CardContent className="h-80">
-           <Bar data={chartData} options={options} />
+        <CardContent>
+           <ScrollArea className="h-80 w-full">
+              <div style={{ height: `${chartHeight}px`, position: 'relative' }}>
+                <Bar data={chartData} options={options} />
+              </div>
+            </ScrollArea>
         </CardContent>
     </Card>
   );
