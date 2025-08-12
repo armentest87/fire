@@ -1,10 +1,12 @@
 'use client';
 import { type JiraIssue } from "@/lib/types";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, ArrowRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "@/components/ui/table";
 import { Badge } from "../ui/badge";
+import { Input } from "../ui/input";
+import { ScrollArea } from "../ui/scroll-area";
 
 
 interface OpenIssuesReportProps {
@@ -30,20 +32,41 @@ const getStatusColor = (status: string) => {
 
 
 export function OpenIssuesReport({ issues }: OpenIssuesReportProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const openIssues = useMemo(() => {
-    return issues.filter(issue => issue.status?.statusCategory?.name !== 'Done')
-                 .sort((a,b) => (b.time_spent_hours || 0) - (a.time_spent_hours || 0))
-                 .slice(0, 10);
-  }, [issues]);
+    const filtered = issues.filter(issue => issue.status?.statusCategory?.name !== 'Done');
+    
+    if (!searchTerm) {
+        return filtered.sort((a,b) => (b.time_spent_hours || 0) - (a.time_spent_hours || 0));
+    }
+
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return filtered.filter(issue => 
+        issue.key.toLowerCase().includes(lowercasedTerm) ||
+        issue.summary.toLowerCase().includes(lowercasedTerm)
+    );
+
+  }, [issues, searchTerm]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top 10 Open Issues</CardTitle>
-        <CardDescription>A list of open issues, prioritized by time spent.</CardDescription>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <CardTitle>Open Issues</CardTitle>
+                <CardDescription>A list of all open issues, searchable by key or summary.</CardDescription>
+            </div>
+            <Input 
+                placeholder="Search issues..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-xs"
+            />
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <ScrollArea className="h-96 w-full">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -84,7 +107,7 @@ export function OpenIssuesReport({ issues }: OpenIssuesReportProps) {
                    )}
                 </TableBody>
             </Table>
-        </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
