@@ -204,16 +204,19 @@ export function ReleasesReport({ issues, projects }: { issues: JiraIssue[], proj
     const [selectedProject, setSelectedProject] = useState<string>('all');
     const [selectedVersion, setSelectedVersion] = useState<string>('all-versions');
 
+    const availableProjects = useMemo(() => {
+        const issueProjectKeys = [...new Set(issues.map(i => i.key.split('-')[0]))];
+        return projects.filter(p => issueProjectKeys.includes(p.key));
+    }, [issues, projects]);
+
     // Auto-select project if only one is available from the fetched issues
     useEffect(() => {
-        const uniqueProjectKeys = [...new Set(issues.map(i => i.key.split('-')[0]))];
-        if (uniqueProjectKeys.length === 1) {
-            const project = projects.find(p => p.key === uniqueProjectKeys[0]);
-            if (project) {
-                setSelectedProject(project.id);
-            }
+        if (availableProjects.length === 1) {
+            setSelectedProject(availableProjects[0].id);
+        } else {
+            setSelectedProject('all');
         }
-    }, [issues, projects]);
+    }, [availableProjects]);
     
     const projectIssues = useMemo(() => {
         if (selectedProject === 'all') return issues;
@@ -257,7 +260,7 @@ export function ReleasesReport({ issues, projects }: { issues: JiraIssue[], proj
                         <SelectTrigger className="w-48"><SelectValue placeholder="Select Projects" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Projects</SelectItem>
-                             {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                             {availableProjects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                      <Select value={selectedVersion} onValueChange={setSelectedVersion} disabled={uniqueFixVersions.length === 0}>

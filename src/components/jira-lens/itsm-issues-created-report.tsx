@@ -9,6 +9,11 @@ import { useMemo, useState } from "react";
 
 export function ItsmIssuesCreatedReport({ issues, projects }: { issues: JiraIssue[], projects: JiraProject[] }) {
     const [selectedProject, setSelectedProject] = useState<string>('all');
+
+    const availableProjects = useMemo(() => {
+        const issueProjectKeys = [...new Set(issues.map(i => i.key.split('-')[0]))];
+        return projects.filter(p => issueProjectKeys.includes(p.key));
+    }, [issues, projects]);
     
     const filteredIssues = useMemo(() => {
         if (selectedProject === 'all') return issues;
@@ -30,7 +35,7 @@ export function ItsmIssuesCreatedReport({ issues, projects }: { issues: JiraIssu
                         <SelectTrigger className="w-48"><SelectValue placeholder="Choose Project" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Projects</SelectItem>
-                            {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                            {availableProjects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
