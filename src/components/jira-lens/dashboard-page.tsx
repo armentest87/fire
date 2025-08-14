@@ -117,14 +117,11 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     setIsExporting(true);
 
     try {
-        // Use a higher scale for better resolution
         const canvas = await html2canvas(elementToCapture, {
-             scale: 2, // Capture at 2x resolution
+             scale: 2,
              useCORS: true,
              logging: false,
-             // Ensure the background is captured correctly
              backgroundColor: window.getComputedStyle(document.body).backgroundColor || '#ffffff',
-             // Explicitly set the width and height to capture the entire scrollable content
              width: elementToCapture.scrollWidth,
              height: elementToCapture.scrollHeight,
              windowWidth: elementToCapture.scrollWidth,
@@ -135,9 +132,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'px',
-            // Use the canvas dimensions for the PDF format, which are now scaled up
             format: [canvas.width, canvas.height],
-            // This hotfix is important for better pixel scaling in jsPDF
             hotfixes: ['px_scaling'],
         });
 

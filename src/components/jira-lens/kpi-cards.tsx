@@ -39,10 +39,10 @@ export function KpiCards({ issues }: KpiCardsProps) {
 
   return (
      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KpiCard title="Total Issues" value={kpis.totalIssues} icon={<ListTodo className="h-6 w-6"/>} />
-        <KpiCard title="Completed" value={kpis.doneCount} icon={<CheckCircle className="h-6 w-6"/>} />
-        <KpiCard title="In Progress" value={kpis.inProgressCount} icon={<Clock className="h-6 w-6"/>} />
-        <KpiCard title="To Do" value={kpis.todoCount} icon={<ListTodo className="h-6 w-6"/>} />
+        <KpiCard title="Total Issues" value={kpis.totalIssues} icon={<ListTodo className="h-6 w-6 text-muted-foreground"/>} />
+        <KpiCard title="Completed" value={kpis.doneCount} icon={<CheckCircle className="h-6 w-6 text-green-500"/>} />
+        <KpiCard title="In Progress" value={kpis.inProgressCount} icon={<Clock className="h-6 w-6 text-blue-500"/>} />
+        <KpiCard title="To Do" value={kpis.todoCount} icon={<ListTodo className="h-6 w-6 text-orange-500"/>} />
         <KpiCard title="Completion Rate" value={`${kpis.completionRate}%`} />
         <KpiCard title="Avg. Resolution" value={`${kpis.avgResolutionTime} days`} />
      </div>

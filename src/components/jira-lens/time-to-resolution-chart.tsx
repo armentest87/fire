@@ -96,9 +96,8 @@ export function TimeToResolutionChart({ issues, groupBy, title = "Average Time t
     };
   }, [issues, groupBy]);
   
-  // Dynamically calculate chart height to ensure all labels are visible
-  const barHeight = 40; // Height per item in pixels
-  const chartPadding = 120; // Padding for header, footer, legend, etc.
+  const barHeight = 40; 
+  const chartPadding = 120;
   const chartHeight = Math.max(320, chartData.labels.length * barHeight + chartPadding);
 
 
@@ -130,8 +129,6 @@ export function TimeToResolutionChart({ issues, groupBy, title = "Average Time t
             if (context.parsed.x !== null) {
               label += context.parsed.x.toFixed(2) + ' hours';
             }
-
-            // Add comparison to target
             if (context.dataset.label === 'Actual Hours') {
                 const target = chartData.datasets[1].data[context.dataIndex] || 0;
                 const actual = context.parsed.x;
