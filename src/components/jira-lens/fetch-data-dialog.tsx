@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -35,7 +36,6 @@ interface FetchDataDialogProps {
   issueTypes: JiraIssueType[];
   statuses: JiraStatus[];
   onProjectChange: (projectId: string) => void;
-  isDataLoading: boolean;
 }
 
 const MultiSelectItem = ({ label, isSelected, onToggle }: { label: string, isSelected: boolean, onToggle: () => void }) => (
@@ -48,7 +48,7 @@ const MultiSelectItem = ({ label, isSelected, onToggle }: { label: string, isSel
 );
 
 
-export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, statuses, onProjectChange, isDataLoading }: FetchDataDialogProps) {
+export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, statuses, onProjectChange }: FetchDataDialogProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'jql'>('basic');
   
   const [projectId, setProjectId] = useState('');
@@ -130,11 +130,11 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button disabled={isDataLoading} size={isMobile ? 'icon' : 'default'}>
+        <Button size={isMobile ? 'icon' : 'default'}>
           {isFetching ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span className='sr-only'>Fetching</span>
+              <Loader2 className="h-5 w-5 animate-spin md:mr-2" />
+              <span className='sr-only md:not-sr-only'>Fetching...</span>
             </>
           ) : (
             'Fetch Data'

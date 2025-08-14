@@ -5,13 +5,11 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { type JiraIssue, type JiraCredentials, type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Loader2, FileDown, Menu } from 'lucide-react';
+import { LogOut, Loader2, Menu } from 'lucide-react';
 import { fetchJiraData, fetchJiraProjects, fetchJiraIssueTypes, fetchJiraStatuses } from '@/app/actions';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 
@@ -39,7 +37,6 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -113,66 +110,6 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     }
   }, [credentials, toast]);
 
-  const handleExportToPdf = async () => {
-    const elementToCapture = printRef.current;
-    if (!elementToCapture) return;
-
-    setIsExporting(true);
-
-    const htmlElement = document.documentElement;
-    const wasDark = htmlElement.classList.contains('dark');
-    if (wasDark) {
-        // Temporarily switch to light mode for better PDF contrast
-        htmlElement.classList.remove('dark');
-        // A short delay to allow the browser to re-render in light mode
-        await new Promise(resolve => setTimeout(resolve, 50));
-    }
-
-    try {
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'px',
-            hotfixes: ['px_scaling'],
-        });
-        
-        const contentHeight = elementToCapture.scrollHeight;
-        const contentWidth = elementToCapture.scrollWidth;
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-
-        await pdf.html(elementToCapture, {
-            callback: function(doc) {
-                doc.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
-            },
-            html2canvas: {
-                scale: 2, 
-                useCORS: true,
-                logging: false,
-                height: contentHeight,
-                windowHeight: contentHeight,
-                width: contentWidth,
-                backgroundColor: '#ffffff'
-            },
-            autoPaging: 'text',
-            width: pdfWidth,
-            windowWidth: contentWidth,
-        });
-
-    } catch (error) {
-        console.error("Error exporting to PDF:", error);
-        toast({
-            title: "Export Failed",
-            description: "An unexpected error occurred while generating the PDF.",
-            variant: "destructive"
-        })
-    } finally {
-        if (wasDark) {
-            htmlElement.classList.add('dark');
-        }
-        setIsExporting(false);
-    }
-  };
-
-
   const uniqueFilterOptions = useMemo(() => {
     if (!allIssues) return { assignees: [], statuses: [], issueTypes: [], priorities: [] };
     const assignees = [...new Set(allIssues.map(i => i.assignee?.displayName).filter(Boolean))].sort();
@@ -244,15 +181,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               issueTypes={issueTypes}
               statuses={statuses}
               onProjectChange={handleProjectMetaFetch}
-              isDataLoading={isDataLoading}
             />
-
-            {allIssues && (
-                 <Button onClick={handleExportToPdf} disabled={isExporting} variant="outline" size={isMobile ? 'icon' : 'default'}>
-                    {isExporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <FileDown className="h-4 w-4" />}
-                    <span className="hidden md:inline ml-2">Export PDF</span>
-                 </Button>
-            )}
 
             <Button variant="ghost" size="icon" onClick={onLogout}>
               <LogOut className="h-5 w-5" />
