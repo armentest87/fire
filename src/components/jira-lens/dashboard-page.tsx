@@ -120,6 +120,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     const htmlElement = document.documentElement;
     const wasDark = htmlElement.classList.contains('dark');
     if (wasDark) {
+        // Temporarily switch to light mode for better PDF contrast
         htmlElement.classList.remove('dark');
     }
 
@@ -136,10 +137,10 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 doc.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
             },
             html2canvas: {
-                scale: 2,
+                scale: 2, // higher scale for better quality
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff' // force white background
             },
             autoPaging: 'text',
             width: pdf.internal.pageSize.getWidth(),
@@ -155,6 +156,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         })
     } finally {
         if (wasDark) {
+            // Restore dark mode if it was enabled
             htmlElement.classList.add('dark');
         }
         setIsExporting(false);
