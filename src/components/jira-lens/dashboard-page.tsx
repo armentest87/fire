@@ -5,13 +5,15 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { type JiraIssue, type JiraCredentials, type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Loader2, FileDown } from 'lucide-react';
+import { LogOut, Loader2, FileDown, Menu } from 'lucide-react';
 import { fetchJiraData, fetchJiraProjects, fetchJiraIssueTypes, fetchJiraStatuses } from '@/app/actions';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 
 
 interface DashboardPageProps {
@@ -41,6 +43,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 
   useEffect(() => {
@@ -122,6 +126,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     if (wasDark) {
         // Temporarily switch to light mode for better PDF contrast
         htmlElement.classList.remove('dark');
+        // A short delay to allow the browser to re-render in light mode
+        await new Promise(resolve => setTimeout(resolve, 50));
     }
 
     try {
@@ -137,10 +143,10 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 doc.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
             },
             html2canvas: {
-                scale: 2, // higher scale for better quality
+                scale: 2, 
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff' // force white background
+                backgroundColor: '#ffffff'
             },
             autoPaging: 'text',
             width: pdf.internal.pageSize.getWidth(),
@@ -156,7 +162,6 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         })
     } finally {
         if (wasDark) {
-            // Restore dark mode if it was enabled
             htmlElement.classList.add('dark');
         }
         setIsExporting(false);
@@ -178,20 +183,42 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   
   const isDataLoading = isLoading || isFetchingIssues;
   const issuesForTab = filteredIssues ?? [];
+  
+  const onTabSelect = (tab: string) => {
+    setActiveTab(tab);
+    if(isMobile) {
+        setIsSidebarOpen(false);
+    }
+  }
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
-      <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      {isMobile ? (
+        <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+            <SheetContent side="left" className="p-0 w-64">
+                 <DashboardTabs activeTab={activeTab} setActiveTab={onTabSelect} />
+            </SheetContent>
+        </Sheet>
+      ) : (
+         <DashboardTabs activeTab={activeTab} setActiveTab={onTabSelect} />
+      )}
 
       <div className="flex flex-col flex-1">
-        <header className="flex items-center justify-between gap-4 py-4 px-6 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-primary">
-                {currentTabInfo?.label}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-                {currentTabInfo?.description}
-            </p>
+        <header className="flex items-center justify-between gap-4 py-3 px-4 md:px-6 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+          <div className='flex items-center gap-2'>
+            {isMobile && (
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon"><Menu className="h-6 w-6"/></Button>
+                </SheetTrigger>
+            )}
+            <div>
+                <h1 className="text-xl md:text-2xl font-bold text-primary">
+                    {currentTabInfo?.label}
+                </h1>
+                <p className="text-sm text-muted-foreground hidden md:block">
+                    {currentTabInfo?.description}
+                </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
@@ -206,15 +233,16 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               />
             )}
 
-            <Button onClick={() => setIsFetchDialogOpen(true)} disabled={isDataLoading}>
+            <Button onClick={() => setIsFetchDialogOpen(true)} disabled={isDataLoading} size={isMobile ? 'icon' : 'default'}>
               {isFetchingIssues ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Fetching...
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className='sr-only'>Fetching</span>
                 </>
               ) : (
                 'Fetch Data'
               )}
+               <span className="md:hidden">Fetch</span>
             </Button>
 
             <FetchDataDialog
@@ -229,9 +257,9 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             />
 
             {allIssues && (
-                 <Button onClick={handleExportToPdf} disabled={isExporting} variant="outline">
-                    {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileDown className="mr-2 h-4 w-4" />}
-                    Export PDF
+                 <Button onClick={handleExportToPdf} disabled={isExporting} variant="outline" size={isMobile ? 'icon' : 'default'}>
+                    {isExporting ? <Loader2 className="h-4 w-4 animate-spin"/> : <FileDown className="h-4 w-4" />}
+                    <span className="hidden md:inline ml-2">Export PDF</span>
                  </Button>
             )}
 
