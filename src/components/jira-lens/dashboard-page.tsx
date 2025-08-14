@@ -117,22 +117,25 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
     setIsExporting(true);
 
     try {
-        const canvas = await html2canvas(elementToCapture, {
-             scale: 2, // Higher scale for better quality
-             useCORS: true,
-             logging: false,
-             backgroundColor: window.getComputedStyle(document.body).backgroundColor || '#ffffff'
-        });
-
-        const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
+            orientation: 'p',
+            unit: 'pt',
+            format: 'a4',
         });
 
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
+        await pdf.html(elementToCapture, {
+            callback: function(doc) {
+                doc.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
+            },
+            html2canvas: {
+                scale: 2, // Higher scale for better quality
+                useCORS: true,
+                logging: false,
+            },
+            autoPaging: 'text',
+            width: 595, // A4 width in points
+            windowWidth: elementToCapture.scrollWidth,
+        });
     } catch (error) {
         console.error("Error exporting to PDF:", error);
         toast({
@@ -144,6 +147,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         setIsExporting(false);
     }
   };
+
 
   const uniqueFilterOptions = useMemo(() => {
     if (!allIssues) return { assignees: [], statuses: [], issueTypes: [], priorities: [] };
