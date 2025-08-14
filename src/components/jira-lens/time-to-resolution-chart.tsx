@@ -96,8 +96,10 @@ export function TimeToResolutionChart({ issues, groupBy, title = "Average Time t
     };
   }, [issues, groupBy]);
   
-  const barHeight = 60; // Height per item in pixels
-  const chartHeight = Math.max(320, chartData.labels.length * barHeight);
+  // Dynamically calculate chart height to ensure all labels are visible
+  const barHeight = 40; // Height per item in pixels
+  const chartPadding = 120; // Padding for header, footer, legend, etc.
+  const chartHeight = Math.max(320, chartData.labels.length * barHeight + chartPadding);
 
 
   const options: ChartOptions<'bar'> = {
