@@ -8,13 +8,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const TYPE_COLORS: Record<string, string> = {
-    'Support': '#219ebc',
-    'Bug': '#fb8500',
-    'New Feature': '#8ecae6',
-    'Task': '#ffb703',
-    'Story': '#023047',
-};
+const HIGH_CONTRAST_COLORS = [
+    '#219ebc', '#fb8500', '#023047', '#ffb703', '#8ecae6', 
+    '#a8dadc', '#d9ed92', '#e63946', '#f1faee', '#a8dadc', 
+    '#457b9d', '#1d3557'
+];
+
+const getColor = (index: number) => HIGH_CONTRAST_COLORS[index % HIGH_CONTRAST_COLORS.length];
 
 export function CreatedIssuesByTypePie({ issues }: { issues: JiraIssue[] }) {
   const isMobile = useIsMobile();
@@ -27,7 +27,7 @@ export function CreatedIssuesByTypePie({ issues }: { issues: JiraIssue[] }) {
 
     const labels = Object.keys(typeCounts).sort((a,b) => typeCounts[b] - typeCounts[a]);
     const data = labels.map(label => typeCounts[label]);
-    const backgroundColor = labels.map(label => TYPE_COLORS[label] || '#9E9E9E');
+    const backgroundColor = labels.map((_, index) => getColor(index));
 
     return {
       labels,

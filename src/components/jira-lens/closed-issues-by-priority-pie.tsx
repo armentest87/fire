@@ -8,13 +8,15 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const PRIORITY_COLORS: Record<string, string> = {
-    'Highest': '#fb8500',
-    'High': '#ffb703',
-    'Medium': '#219ebc',
-    'Low': '#8ecae6',
-    'Lowest': '#a8dadc',
-};
+const HIGH_CONTRAST_COLORS = [
+    '#219ebc', '#fb8500', '#023047', '#ffb703', '#8ecae6', 
+    '#a8dadc', '#d9ed92', '#e63946', '#f1faee', '#a8dadc', 
+    '#457b9d', '#1d3557'
+];
+
+const getColor = (index: number) => HIGH_CONTRAST_COLORS[index % HIGH_CONTRAST_COLORS.length];
+
+const PRIORITY_ORDER = ['Highest', 'High', 'Medium', 'Low', 'Lowest', 'Critical', 'Major', 'Minor', 'Trivial', 'No Priority'];
 
 export function ClosedIssuesByPriorityPie({ issues }: { issues: JiraIssue[] }) {
   const isMobile = useIsMobile();
@@ -27,9 +29,17 @@ export function ClosedIssuesByPriorityPie({ issues }: { issues: JiraIssue[] }) {
       return acc;
     }, {} as Record<string, number>);
 
-    const labels = Object.keys(priorityCounts).sort((a,b) => Object.keys(PRIORITY_COLORS).indexOf(a) - Object.keys(PRIORITY_COLORS).indexOf(b));
+    const labels = Object.keys(priorityCounts).sort((a,b) => {
+        const indexA = PRIORITY_ORDER.indexOf(a);
+        const indexB = PRIORITY_ORDER.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
+
     const data = labels.map(label => priorityCounts[label]);
-    const backgroundColor = labels.map(label => PRIORITY_COLORS[label] || '#9E9E9E');
+    const backgroundColor = labels.map((_, index) => getColor(index));
 
     return {
       labels,

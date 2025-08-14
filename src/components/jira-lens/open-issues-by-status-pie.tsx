@@ -8,17 +8,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const STATUS_COLORS: Record<string, string> = {
-    'To Do': '#ffb703',
-    'Done': '#8ecae6',
-    'Open': '#ffb703',
-    'In Progress': '#219ebc',
-    'Implementing': '#023047',
-    'Canceled': '#fb8500',
-    'Waiting for customer': '#a8dadc',
-    'Waiting for support': '#d9ed92',
-    'No Category': '#B0BEC5'
-};
+const HIGH_CONTRAST_COLORS = [
+    '#219ebc', '#fb8500', '#023047', '#ffb703', '#8ecae6', 
+    '#a8dadc', '#d9ed92', '#e63946', '#f1faee', '#a8dadc', 
+    '#457b9d', '#1d3557'
+];
+
+const getColor = (index: number) => HIGH_CONTRAST_COLORS[index % HIGH_CONTRAST_COLORS.length];
 
 export function OpenIssuesByStatusPie({ issues }: { issues: JiraIssue[] }) {
   const isMobile = useIsMobile();
@@ -33,7 +29,7 @@ export function OpenIssuesByStatusPie({ issues }: { issues: JiraIssue[] }) {
 
     const labels = Object.keys(statusCounts).sort((a,b) => statusCounts[b] - statusCounts[a]);
     const data = labels.map(label => statusCounts[label]);
-    const backgroundColor = labels.map(label => STATUS_COLORS[label] || '#9E9E9E');
+    const backgroundColor = labels.map((_, index) => getColor(index));
 
     return {
       labels,
