@@ -118,22 +118,17 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
     try {
         const canvas = await html2canvas(elementToCapture, {
-             scale: 2,
+             scale: 2, // Higher scale for better quality
              useCORS: true,
              logging: false,
-             backgroundColor: window.getComputedStyle(document.body).backgroundColor || '#ffffff',
-             width: elementToCapture.scrollWidth,
-             height: elementToCapture.scrollHeight,
-             windowWidth: elementToCapture.scrollWidth,
-             windowHeight: elementToCapture.scrollHeight,
+             backgroundColor: window.getComputedStyle(document.body).backgroundColor || '#ffffff'
         });
 
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'px',
-            format: [canvas.width, canvas.height],
-            hotfixes: ['px_scaling'],
+            format: [canvas.width, canvas.height]
         });
 
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
@@ -228,8 +223,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
-            <div ref={printRef} className="bg-background">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900/50">
+            <div ref={printRef} className="bg-background p-4 sm:p-6 rounded-lg shadow-sm">
               {!allIssues && !isDataLoading && <WelcomePlaceholder />}
               {isDataLoading && (
                   <div className="flex items-center justify-center h-full">
