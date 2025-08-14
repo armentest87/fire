@@ -7,16 +7,13 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, ChartData } from 'chart.
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const STATUS_COLORS: Record<string, string> = {
-    'To Do': '#ffb703',
-    'In Progress': '#219ebc',
-    'Done': '#8ecae6',
-    'Open': '#ffb703',
-    'Implementing': '#219ebc',
-    'Canceled': '#fb8500',
-    'In Review': '#8ecae6',
-    'Backlog': '#023047'
-};
+const HIGH_CONTRAST_COLORS = [
+    '#219ebc', '#fb8500', '#023047', '#ffb703', '#8ecae6', 
+    '#a8dadc', '#d9ed92', '#e63946', '#f1faee', '#a8dadc', 
+    '#457b9d', '#1d3557'
+];
+
+const getColor = (index: number) => HIGH_CONTRAST_COLORS[index % HIGH_CONTRAST_COLORS.length];
 
 export function IssuesByStatusChart({ issues }: { issues: JiraIssue[] }) {
   const { chartData, statusList } = useMemo(() => {
@@ -28,12 +25,12 @@ export function IssuesByStatusChart({ issues }: { issues: JiraIssue[] }) {
 
     const labels = Object.keys(statusCounts).sort((a,b) => statusCounts[b] - statusCounts[a]);
     const data = labels.map(label => statusCounts[label]);
-    const backgroundColor = labels.map(label => STATUS_COLORS[label] || '#a8dadc'); // Default color
+    const backgroundColor = labels.map((_, index) => getColor(index));
 
-    const statusList = labels.map(label => ({
+    const statusList = labels.map((label, index) => ({
         label,
         count: statusCounts[label],
-        color: STATUS_COLORS[label] || '#a8dadc',
+        color: getColor(index),
     }));
 
     return {

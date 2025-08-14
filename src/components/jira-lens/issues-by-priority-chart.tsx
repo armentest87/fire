@@ -7,19 +7,15 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const PRIORITY_COLORS: Record<string, string> = {
-    'Highest': '#d90429',
-    'High': '#fb8500',
-    'Medium': '#ffb703',
-    'Low': '#8ecae6',
-    'Lowest': '#219ebc',
-    'Critical': '#d90429',
-    'Major': '#fb8500',
-    'Minor': '#8ecae6',
-    'Trivial': '#a8dadc',
-};
+const HIGH_CONTRAST_COLORS = [
+    '#d90429', '#fb8500', '#ffb703', '#8ecae6', '#219ebc', '#023047',
+    '#e63946', '#f1faee', '#a8dadc', '#457b9d', '#1d3557', '#6a040f'
+];
 
-const PRIORITY_ORDER = ['Highest', 'High', 'Medium', 'Low', 'Lowest', 'Critical', 'Major', 'Minor', 'Trivial'];
+const getColor = (index: number) => HIGH_CONTRAST_COLORS[index % HIGH_CONTRAST_COLORS.length];
+
+const PRIORITY_ORDER = ['Highest', 'High', 'Medium', 'Low', 'Lowest', 'Critical', 'Major', 'Minor', 'Trivial', 'No Priority'];
+
 
 export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
   const { chartData, priorityList, totalIssues } = useMemo(() => {
@@ -29,16 +25,23 @@ export function IssuesByPriorityChart({ issues }: { issues: JiraIssue[] }) {
       return acc;
     }, {} as Record<string, number>);
 
-    const labels = Object.keys(priorityCounts).sort((a,b) => PRIORITY_ORDER.indexOf(a) - PRIORITY_ORDER.indexOf(b));
-    const data = labels.map(label => priorityCounts[label]);
-    const backgroundColor = labels.map(label => PRIORITY_COLORS[label] || '#9E9E9E');
+    const labels = Object.keys(priorityCounts).sort((a,b) => {
+        const indexA = PRIORITY_ORDER.indexOf(a);
+        const indexB = PRIORITY_ORDER.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
 
+    const data = labels.map(label => priorityCounts[label]);
+    const backgroundColor = labels.map((_, index) => getColor(index));
     const total = issues.length;
 
-    const priorityList = labels.map(label => ({
+    const priorityList = labels.map((label, index) => ({
         label,
         count: priorityCounts[label],
-        color: PRIORITY_COLORS[label] || '#9E9E9E',
+        color: getColor(index),
     }));
 
     return {

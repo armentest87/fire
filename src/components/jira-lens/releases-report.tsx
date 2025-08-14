@@ -11,22 +11,33 @@ import { eachDayOfInterval, format, parseISO } from 'date-fns';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
+const HIGH_CONTRAST_COLORS = [
+    '#fb8500', '#219ebc', '#023047', '#ffb703', '#8ecae6', 
+    '#a8dadc', '#d9ed92', '#e63946', '#f1faee', '#a8dadc', 
+    '#457b9d', '#1d3557'
+];
+
+const getColor = (index: number) => HIGH_CONTRAST_COLORS[index % HIGH_CONTRAST_COLORS.length];
+
+
 const IssuesByTypeDonut = ({ issues }: { issues: JiraIssue[] }) => {
     const chartData = useMemo(() => {
         const typeCounts = issues.reduce((acc, issue) => {
             if (issue.issuetype && issue.issuetype.name) {
-                const type = issue.issuetype.name === 'Bug' ? 'Bug' : 'Task';
+                const type = issue.issuetype.name;
                 acc[type] = (acc[type] || 0) + 1;
             }
             return acc;
         }, {} as Record<string, number>);
+        
+        const labels = Object.keys(typeCounts).sort((a,b) => typeCounts[b] - typeCounts[a]);
 
         return {
-            labels: Object.keys(typeCounts),
+            labels,
             datasets: [{
-                data: Object.values(typeCounts),
-                backgroundColor: ['#fb8500', '#219ebc'],
-                hoverBackgroundColor: ['#ffb703', '#8ecae6']
+                data: labels.map(l => typeCounts[l]),
+                backgroundColor: labels.map((_,i) => getColor(i)),
+                hoverBackgroundColor: labels.map((_,i) => getColor(i))
             }]
         }
     }, [issues]);
@@ -35,7 +46,7 @@ const IssuesByTypeDonut = ({ issues }: { issues: JiraIssue[] }) => {
         <Card>
             <CardHeader>
                 <CardTitle>Issues by Type</CardTitle>
-                <CardDescription>Distribution of issues by type (Task vs. Bug).</CardDescription>
+                <CardDescription>Distribution of issues by type.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="h-64">
@@ -48,7 +59,9 @@ const IssuesByTypeDonut = ({ issues }: { issues: JiraIssue[] }) => {
 
 const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
     const chartData = useMemo(() => {
-        const dailyData: Record<string, { Bug: number, Task: number }> = {};
+        const dailyData: Record<string, Record<string, number>> = {};
+        const issueTypes = [...new Set(issues.map(i => i.issuetype?.name).filter(Boolean))];
+
         const validIssues = issues.filter(i => i.created);
         if (validIssues.length === 0) return { labels: [], datasets: [] };
 
@@ -57,13 +70,14 @@ const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
 
         dateRange.forEach(day => {
             const dayString = format(day, 'yyyy-MM-dd');
-            dailyData[dayString] = { Bug: 0, Task: 0 };
+            dailyData[dayString] = {};
+            issueTypes.forEach(type => dailyData[dayString][type] = 0);
         });
 
         validIssues.forEach(issue => {
             if (!issue.created || !issue.issuetype?.name) return;
             const dayString = format(parseISO(issue.created), 'yyyy-MM-dd');
-            const type = issue.issuetype.name === 'Bug' ? 'Bug' : 'Task';
+            const type = issue.issuetype.name;
             if (dailyData[dayString]) {
                 dailyData[dayString][type]++;
             }
@@ -73,10 +87,11 @@ const IssuesOverTimeChart = ({ issues }: { issues: JiraIssue[] }) => {
 
         return {
             labels,
-            datasets: [
-                { label: 'Bug', data: labels.map(l => dailyData[l].Bug), backgroundColor: '#fb8500' },
-                { label: 'Task', data: labels.map(l => dailyData[l].Task), backgroundColor: '#219ebc' },
-            ]
+            datasets: issueTypes.map((type, index) => ({
+                label: type,
+                data: labels.map(l => dailyData[l][type] || 0),
+                backgroundColor: getColor(index)
+            }))
         }
     }, [issues]);
 
@@ -174,7 +189,7 @@ const DetailedReleaseTable = ({ issues }: { issues: JiraIssue[] }) => {
                                 </TableRow>
                             )}
                             {releases.map(release => release.issues.map((issue, index) => (
-                                <TableRow key={issue.key}>
+                                <TableRow key={`${release.version}-${issue.key}`}>
                                     {index === 0 && <TableCell rowSpan={release.issues.length} className="font-semibold align-top">{release.version}</TableCell>}
                                     <TableCell>{issue.key}</TableCell>
                                     <TableCell>{issue.assignee?.displayName || 'Unassigned'}</TableCell>
