@@ -39,7 +39,7 @@ export function ServiceKpiCards({ issues }: KpiCardsProps) {
 
     const dates = issuesWithCreationDate.map(i => parseISO(i.created!));
     const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    const maxDate = new Date(); // Use current date as end date for a more accurate daily average
     const totalDays = differenceInDays(maxDate, minDate) + 1;
 
     const avgCreatedPerDay = totalDays > 0 ? (totalCreated / totalDays).toFixed(2) : '0.00';
