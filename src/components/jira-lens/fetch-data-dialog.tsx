@@ -53,8 +53,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
   const [createdDate, setCreatedDate] = useState<Date | undefined>();
   const [updatedDate, setUpdatedDate] = useState<Date | undefined>();
   const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
-  const [dialogClosePending, setDialogClosePending] = useState(false);
-
+  
   const [jql, setJql] = useState('ORDER BY created DESC');
 
   useEffect(() => {
@@ -65,14 +64,6 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
-
-  useEffect(() => {
-      if (dialogClosePending && !isFetching) {
-          // This ensures the close is triggered after the fetch state has updated
-          // However, direct imperative closing is better handled by the DialogClose component
-          setDialogClosePending(false);
-      }
-  }, [dialogClosePending, isFetching])
 
   const constructJqlFromBasic = () => {
     const parts: string[] = [];
@@ -109,7 +100,6 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
     } else {
       onFetch(jql);
     }
-    setDialogClosePending(true);
   };
 
   const setDateRange = (duration: Duration, dateSetter: React.Dispatch<React.SetStateAction<Date | undefined>>) => {
