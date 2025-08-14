@@ -1,4 +1,5 @@
 
+
 'use client';
 import { type JiraIssue, type JiraProject } from "@/lib/types";
 import { useState, useMemo, useEffect }from "react";
@@ -180,6 +181,7 @@ export function TimeworkReport({ issues, projects, allIssues }: { issues: JiraIs
     const filteredIssues = useMemo(() => {
         let yearFiltered = issues.filter(i => {
             if (!i.updated) return false;
+            if (selectedYears.size === 0) return false; // if no years selected, show nothing
             const year = format(parseISO(i.updated), 'yyyy');
             return selectedYears.has(year);
         });

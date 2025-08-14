@@ -173,7 +173,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 priorities={uniqueFilterOptions.priorities}
               />
             )}
-
+            
             <Dialog>
               <DialogTrigger asChild>
                 <Button size={isMobile ? 'icon' : 'default'}>

@@ -1,3 +1,4 @@
+
 'use client';
 import React from "react";
 import { type JiraIssue } from "@/lib/types";
@@ -40,6 +41,8 @@ export function UserWorkloadReport({ issues }: UserWorkloadReportProps) {
             if (issue.status?.statusCategory?.name === 'Done') return acc;
             
             const assignee = issue.assignee?.displayName || 'Unassigned';
+             if (assignee === 'Unassigned' && !issue.assignee) return acc; // Skip truly unassigned issues
+
             if (!acc[assignee]) {
                 acc[assignee] = {
                     projects: {},
