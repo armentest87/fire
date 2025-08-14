@@ -59,6 +59,7 @@ export function LoginPage({ onLogin, isConnecting }: LoginPageProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                suppressHydrationWarning
                 disabled={isConnecting}
                 className="bg-white dark:bg-gray-800"
               />
@@ -72,6 +73,7 @@ export function LoginPage({ onLogin, isConnecting }: LoginPageProps) {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 required
+                suppressHydrationWarning
                 disabled={isConnecting}
                 className="bg-white dark:bg-gray-800"
               />
