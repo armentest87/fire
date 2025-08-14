@@ -36,26 +36,26 @@ const getTargetHours = (groupBy: GroupByKey, key: string): number => {
 const getData = (issues: JiraIssue[], groupBy: GroupByKey) => {
     const resolvedIssues = issues.filter(i => i.resolved && i.created);
     const grouped = resolvedIssues.reduce((acc, issue) => {
-        let key: string | undefined;
+        let key: string | undefined | null;
+
         if (groupBy === 'assignee') {
             key = issue.assignee?.displayName;
-        } else {
-            // This handles both 'priority' and 'issuetype'
-            const groupObject = issue[groupBy];
-            if(groupObject && 'name' in groupObject) {
-                 key = groupObject.name;
-            }
+        } else if (groupBy === 'priority') {
+            key = issue.priority?.name;
+        } else if (groupBy === 'issuetype') {
+            key = issue.issuetype?.name;
         }
-        key = key || 'Unassigned';
+        
+        const groupKey = key || 'Unassigned';
 
-        if (!acc[key]) {
-            acc[key] = { totalHours: 0, count: 0 };
+        if (!acc[groupKey]) {
+            acc[groupKey] = { totalHours: 0, count: 0 };
         }
         if (issue.resolved && issue.created) {
              const resolutionHours = (dateFnsParseISO(issue.resolved).getTime() - dateFnsParseISO(issue.created).getTime()) / (1000 * 3600);
              if (resolutionHours >= 0) { // Ensure no negative resolution times
-                acc[key].totalHours += resolutionHours;
-                acc[key].count++;
+                acc[groupKey].totalHours += resolutionHours;
+                acc[groupKey].count++;
              }
         }
         return acc;
