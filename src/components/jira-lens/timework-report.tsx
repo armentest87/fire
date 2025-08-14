@@ -151,6 +151,11 @@ export function TimeworkReport({ issues, projects, allIssues }: { issues: JiraIs
         return Array.from(yearSet).sort((a,b) => parseInt(b) - parseInt(a));
     }, [allIssues]);
 
+    const availableProjects = useMemo(() => {
+        const issueProjectKeys = [...new Set(issues.map(i => i.key.split('-')[0]))];
+        return projects.filter(p => issueProjectKeys.includes(p.key));
+    }, [issues, projects]);
+
     const [selectedYears, setSelectedYears] = useState<Set<string>>(new Set(years));
     const [selectedProject, setSelectedProject] = useState('all');
 
@@ -225,7 +230,7 @@ export function TimeworkReport({ issues, projects, allIssues }: { issues: JiraIs
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Projects</SelectItem>
-                                    {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                    {availableProjects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </CardContent>

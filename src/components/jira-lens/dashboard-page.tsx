@@ -38,7 +38,6 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [statuses, setStatuses] = useState<JiraStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
-  const [isFetchDialogOpen, setIsFetchDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
@@ -89,7 +88,6 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       });
     } finally {
       setIsFetchingIssues(false);
-      setIsFetchDialogOpen(false);
     }
   };
 
@@ -137,9 +135,10 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             hotfixes: ['px_scaling'],
         });
         
-        const pdfWidth = pdf.internal.pageSize.getWidth();
         const contentHeight = elementToCapture.scrollHeight;
-        
+        const contentWidth = elementToCapture.scrollWidth;
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+
         await pdf.html(elementToCapture, {
             callback: function(doc) {
                 doc.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
@@ -148,13 +147,14 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 scale: 2, 
                 useCORS: true,
                 logging: false,
-                height: contentHeight, // Capture the full height
-                windowHeight: contentHeight, // Ensure window context is also full height
+                height: contentHeight,
+                windowHeight: contentHeight,
+                width: contentWidth,
                 backgroundColor: '#ffffff'
             },
             autoPaging: 'text',
             width: pdfWidth,
-            windowWidth: elementToCapture.scrollWidth,
+            windowWidth: contentWidth,
         });
 
     } catch (error) {
@@ -237,27 +237,14 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               />
             )}
 
-            <Button onClick={() => setIsFetchDialogOpen(true)} disabled={isDataLoading} size={isMobile ? 'icon' : 'default'}>
-              {isFetchingIssues ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className='sr-only'>Fetching</span>
-                </>
-              ) : (
-                'Fetch Data'
-              )}
-               <span className="md:hidden">Fetch</span>
-            </Button>
-
             <FetchDataDialog
-              isOpen={isFetchDialogOpen}
-              onOpenChange={setIsFetchDialogOpen}
               onFetch={handleFetch}
               isFetching={isFetchingIssues}
               projects={projects}
               issueTypes={issueTypes}
               statuses={statuses}
               onProjectChange={handleProjectMetaFetch}
+              isDataLoading={isDataLoading}
             />
 
             {allIssues && (
@@ -275,8 +262,8 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900/50">
-            <div ref={printRef} className="bg-background">
-                <div className="p-4 sm:p-6 rounded-lg shadow-sm">
+            <div ref={printRef}>
+                <div className="p-4 sm:p-6 rounded-lg shadow-sm bg-background">
                   {!allIssues && !isDataLoading && <WelcomePlaceholder />}
                   {isDataLoading && (
                       <div className="flex items-center justify-center h-full">

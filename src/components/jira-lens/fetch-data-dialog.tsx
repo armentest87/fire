@@ -9,6 +9,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -23,22 +25,22 @@ import { cn } from '@/lib/utils';
 import { type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { ScrollArea } from '../ui/scroll-area';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 interface FetchDataDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
   onFetch: (jql: string) => void;
   isFetching: boolean;
   projects: JiraProject[];
   issueTypes: JiraIssueType[];
   statuses: JiraStatus[];
   onProjectChange: (projectId: string) => void;
+  isDataLoading: boolean;
 }
 
 const MultiSelectItem = ({ label, isSelected, onToggle }: { label: string, isSelected: boolean, onToggle: () => void }) => (
-    <CommandItem onSelect={onToggle} className="cursor-pointer">
-        <div className="flex items-center gap-2 w-full" onClick={onToggle}>
+    <CommandItem onSelect={onToggle} className="cursor-pointer" value={label}>
+        <div className="flex items-center gap-2 w-full" onClick={(e) => { e.preventDefault(); onToggle();}}>
             <Checkbox checked={isSelected} />
             <span>{label}</span>
         </div>
@@ -46,7 +48,7 @@ const MultiSelectItem = ({ label, isSelected, onToggle }: { label: string, isSel
 );
 
 
-export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, projects, issueTypes, statuses, onProjectChange }: FetchDataDialogProps) {
+export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, statuses, onProjectChange, isDataLoading }: FetchDataDialogProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'jql'>('basic');
   
   const [projectId, setProjectId] = useState('');
@@ -55,8 +57,9 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
   const [createdDate, setCreatedDate] = useState<Date | undefined>();
   const [updatedDate, setUpdatedDate] = useState<Date | undefined>();
   const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
 
-  // State for JQL
   const [jql, setJql] = useState('ORDER BY created DESC');
 
   useEffect(() => {
@@ -65,7 +68,8 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
       setSelectedIssueTypes(new Set());
       setSelectedStatuses(new Set());
     }
-  }, [projectId, onProjectChange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
   const constructJqlFromBasic = () => {
     const parts: string[] = [];
@@ -102,6 +106,7 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
     } else {
       onFetch(jql);
     }
+    setIsDialogOpen(false);
   };
 
   const setDateRange = (duration: Duration, dateSetter: React.Dispatch<React.SetStateAction<Date | undefined>>) => {
@@ -123,7 +128,20 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
   const selectedProjectName = projects.find(p => p.id === projectId)?.name;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger asChild>
+        <Button disabled={isDataLoading} size={isMobile ? 'icon' : 'default'}>
+          {isFetching ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span className='sr-only'>Fetching</span>
+            </>
+          ) : (
+            'Fetch Data'
+          )}
+           <span className="md:hidden sr-only">Fetch</span>
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>Fetch Jira Data</DialogTitle>
@@ -338,9 +356,11 @@ export function FetchDataDialog({ isOpen, onOpenChange, onFetch, isFetching, pro
           </TabsContent>
         </Tabs>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isFetching}>
-            Cancel
-          </Button>
+          <DialogClose asChild>
+            <Button variant="outline" disabled={isFetching}>
+              Cancel
+            </Button>
+          </DialogClose>
           <Button onClick={handleFetchClick} disabled={isFetching || (activeTab === 'basic' && isBasicFetchDisabled) || (activeTab === 'jql' && !jql)}>
             {isFetching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Fetch Issues
