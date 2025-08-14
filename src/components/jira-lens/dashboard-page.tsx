@@ -114,13 +114,21 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const handleExportToPdf = async () => {
     const elementToCapture = printRef.current;
     if (!elementToCapture) return;
+
     setIsExporting(true);
+
+    const htmlElement = document.documentElement;
+    const wasDark = htmlElement.classList.contains('dark');
+    if (wasDark) {
+        htmlElement.classList.remove('dark');
+    }
 
     try {
         const pdf = new jsPDF({
             orientation: 'p',
-            unit: 'pt',
+            unit: 'px',
             format: 'a4',
+            hotfixes: ['px_scaling'],
         });
 
         await pdf.html(elementToCapture, {
@@ -128,14 +136,16 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 doc.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
             },
             html2canvas: {
-                scale: 2, // Higher scale for better quality
+                scale: 2,
                 useCORS: true,
                 logging: false,
+                backgroundColor: '#ffffff'
             },
             autoPaging: 'text',
-            width: 595, // A4 width in points
+            width: pdf.internal.pageSize.getWidth(),
             windowWidth: elementToCapture.scrollWidth,
         });
+
     } catch (error) {
         console.error("Error exporting to PDF:", error);
         toast({
@@ -144,6 +154,9 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             variant: "destructive"
         })
     } finally {
+        if (wasDark) {
+            htmlElement.classList.add('dark');
+        }
         setIsExporting(false);
     }
   };
