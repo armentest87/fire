@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { type JiraIssue, type JiraCredentials, type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Loader2, FileDown } from 'lucide-react';
 import { fetchJiraData, fetchJiraProjects, fetchJiraIssueTypes, fetchJiraStatuses } from '@/app/actions';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 
 interface DashboardPageProps {
@@ -35,7 +37,10 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [isFetchDialogOpen, setIsFetchDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+  const printRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -49,7 +54,6 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 description: error instanceof Error ? error.message : "Could not load the list of available projects.",
                 variant: "destructive",
             });
-            // If fetching projects fails on dashboard, maybe we logout?
             onLogout();
         } finally {
             setIsLoading(false);
@@ -105,6 +109,39 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       });
     }
   }, [credentials, toast]);
+
+  const handleExportToPdf = async () => {
+    if (!printRef.current) return;
+    setIsExporting(true);
+
+    try {
+        const canvas = await html2canvas(printRef.current, {
+             scale: 2, // Higher scale for better quality
+             useCORS: true,
+             logging: false,
+             backgroundColor: null, // Use element's background
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+        console.error("Error exporting to PDF:", error);
+        toast({
+            title: "Export Failed",
+            description: "An unexpected error occurred while generating the PDF.",
+            variant: "destructive"
+        })
+    } finally {
+        setIsExporting(false);
+    }
+  };
 
   const uniqueFilterOptions = useMemo(() => {
     if (!allIssues) return { assignees: [], statuses: [], issueTypes: [], priorities: [] };
@@ -170,6 +207,13 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               onProjectChange={handleProjectMetaFetch}
             />
 
+            {allIssues && (
+                 <Button onClick={handleExportToPdf} disabled={isExporting} variant="outline">
+                    {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileDown className="mr-2 h-4 w-4" />}
+                    Export PDF
+                 </Button>
+            )}
+
             <Button variant="ghost" size="icon" onClick={onLogout}>
               <LogOut className="h-5 w-5" />
                <span className="sr-only">Logout</span>
@@ -177,7 +221,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main ref={printRef} className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
             {!allIssues && !isDataLoading && <WelcomePlaceholder />}
             {isDataLoading && (
                 <div className="flex items-center justify-center h-full">
