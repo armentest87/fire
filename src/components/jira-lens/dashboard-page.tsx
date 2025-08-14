@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -117,10 +118,10 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
     try {
         const canvas = await html2canvas(elementToCapture, {
-             scale: 2,
+             scale: 2, // Increasing scale improves quality
              useCORS: true,
              logging: false,
-             backgroundColor: null,
+             backgroundColor: window.getComputedStyle(document.body).backgroundColor || '#ffffff',
              // Ensure it captures the full height, not just the visible part
              windowHeight: elementToCapture.scrollHeight,
              windowWidth: elementToCapture.scrollWidth,
@@ -227,7 +228,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
-            <div ref={printRef}>
+            <div ref={printRef} className="bg-background">
               {!allIssues && !isDataLoading && <WelcomePlaceholder />}
               {isDataLoading && (
                   <div className="flex items-center justify-center h-full">
