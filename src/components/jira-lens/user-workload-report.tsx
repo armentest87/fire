@@ -129,7 +129,7 @@ export function UserWorkloadReport({ issues }: UserWorkloadReportProps) {
                             {expandedRows[row.assignee] && (
                                 <>
                                  {row.projects.map(p => (
-                                    <React.Fragment key={p.name}>
+                                    <React.Fragment key={`${row.assignee}-${p.name}`}>
                                     <TableRow className="bg-muted/30 hover:bg-muted/40">
                                         <TableCell className="pl-4">
                                              <Button variant="ghost" size="sm" onClick={() => toggleRow(`${row.assignee}-${p.name}`)} className="-ml-2">
@@ -142,7 +142,7 @@ export function UserWorkloadReport({ issues }: UserWorkloadReportProps) {
                                         <TableCell className="text-right text-muted-foreground">{formatHours(p.estimateRemaining)}</TableCell>
                                     </TableRow>
                                     {expandedRows[`${row.assignee}-${p.name}`] && p.issues.map(issue => (
-                                         <TableRow key={issue.key} className="bg-muted/10 hover:bg-muted/20">
+                                         <TableRow key={`${row.assignee}-${p.name}-${issue.key}`} className="bg-muted/10 hover:bg-muted/20">
                                             <TableCell className="pl-16 text-xs text-muted-foreground/80 flex items-center gap-2">
                                                <FileText className="h-3 w-3" />
                                                <span>{issue.key}: {issue.summary}</span>
