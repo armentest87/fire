@@ -4,13 +4,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,8 +24,6 @@ import { cn } from '@/lib/utils';
 import { type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { ScrollArea } from '../ui/scroll-area';
-import { useIsMobile } from '@/hooks/use-mobile';
-
 
 interface FetchDataDialogProps {
   onFetch: (jql: string) => void;
@@ -57,8 +53,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
   const [createdDate, setCreatedDate] = useState<Date | undefined>();
   const [updatedDate, setUpdatedDate] = useState<Date | undefined>();
   const [projectPopoverOpen, setProjectPopoverOpen] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const isMobile = useIsMobile();
+  const [dialogClosePending, setDialogClosePending] = useState(false);
 
   const [jql, setJql] = useState('ORDER BY created DESC');
 
@@ -70,6 +65,14 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
+
+  useEffect(() => {
+      if (dialogClosePending && !isFetching) {
+          // This ensures the close is triggered after the fetch state has updated
+          // However, direct imperative closing is better handled by the DialogClose component
+          setDialogClosePending(false);
+      }
+  }, [dialogClosePending, isFetching])
 
   const constructJqlFromBasic = () => {
     const parts: string[] = [];
@@ -106,7 +109,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
     } else {
       onFetch(jql);
     }
-    setIsDialogOpen(false);
+    setDialogClosePending(true);
   };
 
   const setDateRange = (duration: Duration, dateSetter: React.Dispatch<React.SetStateAction<Date | undefined>>) => {
@@ -128,20 +131,6 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
   const selectedProjectName = projects.find(p => p.id === projectId)?.name;
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button size={isMobile ? 'icon' : 'default'}>
-          {isFetching ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin md:mr-2" />
-              <span className='sr-only md:not-sr-only'>Fetching...</span>
-            </>
-          ) : (
-            'Fetch Data'
-          )}
-           <span className="md:hidden sr-only">Fetch</span>
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-[620px]">
         <DialogHeader>
           <DialogTitle>Fetch Jira Data</DialogTitle>
@@ -361,12 +350,13 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
               Cancel
             </Button>
           </DialogClose>
-          <Button onClick={handleFetchClick} disabled={isFetching || (activeTab === 'basic' && isBasicFetchDisabled) || (activeTab === 'jql' && !jql)}>
-            {isFetching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Fetch Issues
-          </Button>
+          <DialogClose asChild>
+            <Button onClick={handleFetchClick} disabled={isFetching || (activeTab === 'basic' && isBasicFetchDisabled) || (activeTab === 'jql' && !jql)}>
+              {isFetching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Fetch Issues
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
   );
 }

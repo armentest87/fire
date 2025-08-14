@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { type JiraIssue, type JiraCredentials, type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +12,7 @@ import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Dialog, DialogTrigger } from '../ui/dialog';
 
 
 interface DashboardPageProps {
@@ -38,7 +39,6 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
-  const printRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -174,14 +174,29 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
               />
             )}
 
-            <FetchDataDialog
-              onFetch={handleFetch}
-              isFetching={isFetchingIssues}
-              projects={projects}
-              issueTypes={issueTypes}
-              statuses={statuses}
-              onProjectChange={handleProjectMetaFetch}
-            />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size={isMobile ? 'icon' : 'default'}>
+                  {isFetchingIssues ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin md:mr-2" />
+                      <span className='hidden md:inline'>Fetching...</span>
+                    </>
+                  ) : (
+                     <span className='hidden md:inline'>Fetch Data</span>
+                  )}
+                  <span className="sr-only">Fetch Data</span>
+                </Button>
+              </DialogTrigger>
+              <FetchDataDialog
+                onFetch={handleFetch}
+                isFetching={isFetchingIssues}
+                projects={projects}
+                issueTypes={issueTypes}
+                statuses={statuses}
+                onProjectChange={handleProjectMetaFetch}
+              />
+            </Dialog>
 
             <Button variant="ghost" size="icon" onClick={onLogout}>
               <LogOut className="h-5 w-5" />
@@ -191,28 +206,26 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900/50">
-            <div ref={printRef}>
-                <div className="p-4 sm:p-6 rounded-lg shadow-sm bg-background">
-                  {!allIssues && !isDataLoading && <WelcomePlaceholder />}
-                  {isDataLoading && (
-                      <div className="flex items-center justify-center h-full">
-                          <div className="text-center">
-                            <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-                            <p className="text-lg text-muted-foreground mt-4">
-                              {isLoading ? "Loading projects..." : "Fetching issues..."}
-                            </p>
-                          </div>
+            <div className="p-4 sm:p-6 rounded-lg shadow-sm bg-background">
+              {!allIssues && !isDataLoading && <WelcomePlaceholder />}
+              {isDataLoading && (
+                  <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+                        <p className="text-lg text-muted-foreground mt-4">
+                          {isLoading ? "Loading projects..." : "Fetching issues..."}
+                        </p>
                       </div>
-                  )}
-                  {CurrentTabComponent && allIssues ? (
-                      <div className="animate-fade-in">
-                        <CurrentTabComponent issues={issuesForTab} projects={projects} allIssues={allIssues} />
-                      </div>
-                    ) : (
-                       !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
-                    )
-                  }
-                </div>
+                  </div>
+              )}
+              {CurrentTabComponent && allIssues ? (
+                  <div className="animate-fade-in">
+                    <CurrentTabComponent issues={issuesForTab} projects={projects} allIssues={allIssues} />
+                  </div>
+                ) : (
+                   !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
+                )
+              }
             </div>
         </main>
       </div>
