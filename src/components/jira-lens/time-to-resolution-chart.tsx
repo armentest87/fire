@@ -69,7 +69,7 @@ const getData = (issues: JiraIssue[], groupBy: GroupByKey) => {
     })).sort((a,b) => b.avgHours - a.avgHours);
 }
 
-export function TimeToResolutionChart({ issues, groupBy, title = "Average Time to Resolution" }: { issues: JiraIssue[], groupBy: GroupByKey, title?: string }) {
+export function TimeToResolutionChart({ issues, groupBy = 'priority', title = "Average Time to Resolution" }: { issues: JiraIssue[], groupBy?: GroupByKey, title?: string }) {
     
   const chartData = useMemo(() => {
     const groupedData = getData(issues, groupBy);

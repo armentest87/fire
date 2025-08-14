@@ -1,3 +1,4 @@
+
 'use client';
 import { type JiraIssue } from "@/lib/types";
 import { KpiCards } from "./kpi-cards";
@@ -23,7 +24,7 @@ export function Overview({ issues }: { issues: JiraIssue[] }) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <TimeToResolutionChart issues={issues} />
+                <TimeToResolutionChart issues={issues} groupBy="priority" />
                 <IssuesByPriorityChart issues={issues} />
             </div>
 
