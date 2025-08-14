@@ -65,7 +65,7 @@ const getData = (issues: JiraIssue[], groupBy: GroupByKey) => {
     .map(([key, data]) => ({
         key,
         avgHours: data.totalHours / data.count,
-    })).sort((a,b) => b.avgHours - a.avgHours).slice(0, 20); // Limit to top 20
+    })).sort((a,b) => b.avgHours - a.avgHours);
 }
 
 export function TimeToResolutionChart({ issues, groupBy, title = "Average Time to Resolution" }: { issues: JiraIssue[], groupBy: GroupByKey, title?: string }) {
@@ -167,8 +167,4 @@ export function TimeToResolutionChart({ issues, groupBy, title = "Average Time t
         </CardContent>
     </Card>
   );
-}
-
-function parseISO(arg0: string): Date {
-    return new Date(arg0);
 }
