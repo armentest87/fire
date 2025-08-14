@@ -134,10 +134,12 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         const pdf = new jsPDF({
             orientation: 'p',
             unit: 'px',
-            format: 'a4',
             hotfixes: ['px_scaling'],
         });
-
+        
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const contentHeight = elementToCapture.scrollHeight;
+        
         await pdf.html(elementToCapture, {
             callback: function(doc) {
                 doc.save(`jira-lens-export-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
@@ -146,10 +148,12 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 scale: 2, 
                 useCORS: true,
                 logging: false,
+                height: contentHeight, // Capture the full height
+                windowHeight: contentHeight, // Ensure window context is also full height
                 backgroundColor: '#ffffff'
             },
             autoPaging: 'text',
-            width: pdf.internal.pageSize.getWidth(),
+            width: pdfWidth,
             windowWidth: elementToCapture.scrollWidth,
         });
 
@@ -271,26 +275,28 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900/50">
-            <div ref={printRef} className="bg-background p-4 sm:p-6 rounded-lg shadow-sm">
-              {!allIssues && !isDataLoading && <WelcomePlaceholder />}
-              {isDataLoading && (
-                  <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-                        <p className="text-lg text-muted-foreground mt-4">
-                          {isLoading ? "Loading projects..." : "Fetching issues..."}
-                        </p>
+            <div ref={printRef} className="bg-background">
+                <div className="p-4 sm:p-6 rounded-lg shadow-sm">
+                  {!allIssues && !isDataLoading && <WelcomePlaceholder />}
+                  {isDataLoading && (
+                      <div className="flex items-center justify-center h-full">
+                          <div className="text-center">
+                            <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+                            <p className="text-lg text-muted-foreground mt-4">
+                              {isLoading ? "Loading projects..." : "Fetching issues..."}
+                            </p>
+                          </div>
                       </div>
-                  </div>
-              )}
-              {CurrentTabComponent && allIssues ? (
-                  <div className="animate-fade-in">
-                    <CurrentTabComponent issues={issuesForTab} projects={projects} allIssues={allIssues} />
-                  </div>
-                ) : (
-                   !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
-                )
-              }
+                  )}
+                  {CurrentTabComponent && allIssues ? (
+                      <div className="animate-fade-in">
+                        <CurrentTabComponent issues={issuesForTab} projects={projects} allIssues={allIssues} />
+                      </div>
+                    ) : (
+                       !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
+                    )
+                  }
+                </div>
             </div>
         </main>
       </div>

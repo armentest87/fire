@@ -44,8 +44,8 @@ export function KpiCards({ issues }: KpiCardsProps) {
         <KpiCard title="Completed" value={kpis.doneCount} icon={<CheckCircle className="h-6 w-6 text-green-500"/>} />
         <KpiCard title="In Progress" value={kpis.inProgressCount} icon={<Clock className="h-6 w-6 text-blue-500"/>} />
         <KpiCard title="To Do" value={kpis.todoCount} icon={<ListTodo className="h-6 w-6 text-orange-500"/>} />
-        <KpiCard title="Completion Rate" value={`${kpis.completionRate}%`} icon={<AlertTriangle className="h-6 w-6 text-muted-foreground"/>}/>
-        <KpiCard title="Avg. Resolution" value={`${kpis.avgResolutionTime} days`} icon={<AlertTriangle className="h-6 w-6 text-muted-foreground"/>} />
+        <KpiCard title="Completion Rate" value={`${kpis.completionRate}%`} />
+        <KpiCard title="Avg. Resolution" value={`${kpis.avgResolutionTime} days`} />
      </div>
   );
 }
