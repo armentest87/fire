@@ -118,13 +118,14 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
 
     try {
         const canvas = await html2canvas(elementToCapture, {
-             scale: 2, // Increasing scale improves quality
+             scale: 2,
              useCORS: true,
              logging: false,
              backgroundColor: window.getComputedStyle(document.body).backgroundColor || '#ffffff',
-             // Ensure it captures the full height, not just the visible part
-             windowHeight: elementToCapture.scrollHeight,
+             width: elementToCapture.scrollWidth,
+             height: elementToCapture.scrollHeight,
              windowWidth: elementToCapture.scrollWidth,
+             windowHeight: elementToCapture.scrollHeight,
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -132,7 +133,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             orientation: 'landscape',
             unit: 'px',
             format: [canvas.width, canvas.height],
-            hotfixes: ['px_scaling'], // Important for accurate pixel scaling
+            hotfixes: ['px_scaling'],
         });
 
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
