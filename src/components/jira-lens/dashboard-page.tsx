@@ -111,22 +111,27 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   }, [credentials, toast]);
 
   const handleExportToPdf = async () => {
-    if (!printRef.current) return;
+    const elementToCapture = printRef.current;
+    if (!elementToCapture) return;
     setIsExporting(true);
 
     try {
-        const canvas = await html2canvas(printRef.current, {
-             scale: 2, // Higher scale for better quality
+        const canvas = await html2canvas(elementToCapture, {
+             scale: 2,
              useCORS: true,
              logging: false,
-             backgroundColor: null, // Use element's background
+             backgroundColor: null,
+             // Ensure it captures the full height, not just the visible part
+             windowHeight: elementToCapture.scrollHeight,
+             windowWidth: elementToCapture.scrollWidth,
         });
 
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'px',
-            format: [canvas.width, canvas.height]
+            format: [canvas.width, canvas.height],
+            hotfixes: ['px_scaling'], // Important for accurate pixel scaling
         });
 
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
@@ -221,26 +226,28 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
           </div>
         </header>
 
-        <main ref={printRef} className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
-            {!allIssues && !isDataLoading && <WelcomePlaceholder />}
-            {isDataLoading && (
-                <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-                      <p className="text-lg text-muted-foreground mt-4">
-                        {isLoading ? "Loading projects..." : "Fetching issues..."}
-                      </p>
-                    </div>
-                </div>
-            )}
-            {CurrentTabComponent && allIssues ? (
-                <div className="animate-fade-in">
-                  <CurrentTabComponent issues={issuesForTab} projects={projects} allIssues={allIssues} />
-                </div>
-              ) : (
-                 !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
-              )
-            }
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-background">
+            <div ref={printRef}>
+              {!allIssues && !isDataLoading && <WelcomePlaceholder />}
+              {isDataLoading && (
+                  <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+                        <p className="text-lg text-muted-foreground mt-4">
+                          {isLoading ? "Loading projects..." : "Fetching issues..."}
+                        </p>
+                      </div>
+                  </div>
+              )}
+              {CurrentTabComponent && allIssues ? (
+                  <div className="animate-fade-in">
+                    <CurrentTabComponent issues={issuesForTab} projects={projects} allIssues={allIssues} />
+                  </div>
+                ) : (
+                   !isDataLoading && allIssues && <DashboardTabs.NoIssuesPlaceholder />
+                )
+              }
+            </div>
         </main>
       </div>
     </div>
