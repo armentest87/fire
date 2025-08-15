@@ -1,17 +1,18 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { type JiraIssue, type JiraCredentials, type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Loader2, Menu, Filter as FilterIcon } from 'lucide-react';
+import { LogOut, Loader2, Menu } from 'lucide-react';
 import { fetchJiraData, fetchJiraProjects, fetchJiraIssueTypes, fetchJiraStatuses } from '@/app/actions';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 
 interface DashboardPageProps {
   credentials: JiraCredentials;
@@ -191,6 +192,12 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                 </Button>
               </DialogTrigger>
               <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Fetch Jira Data</DialogTitle>
+                    <DialogDescription>
+                        Choose to fetch by basic filters or use a custom JQL query.
+                    </DialogDescription>
+                </DialogHeader>
                 <FetchDataDialog
                   onFetch={handleFetch}
                   isFetching={isFetchingIssues}
@@ -210,7 +217,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900/50">
-            <div className="p-4 sm:p-6 rounded-lg shadow-sm bg-background">
+            <div className="p-4 sm:p-6 rounded-xl shadow-sm bg-background">
               {!allIssues && !isDataLoading && <WelcomePlaceholder />}
               {isDataLoading && (
                   <div className="flex items-center justify-center h-full min-h-[50vh]">

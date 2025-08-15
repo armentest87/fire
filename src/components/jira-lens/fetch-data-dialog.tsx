@@ -1,12 +1,10 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
   DialogClose,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -125,13 +123,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
 
   return (
     <>
-        <DialogHeader>
-          <DialogTitle>Fetch Jira Data</DialogTitle>
-          <DialogDescription>
-            Choose to fetch by basic filters or use a custom JQL query.
-          </DialogDescription>
-        </DialogHeader>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'basic' | 'jql')} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'basic' | 'jql')} className="w-full pt-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="basic">Basic Filters</TabsTrigger>
             <TabsTrigger value="jql">JQL</TabsTrigger>
