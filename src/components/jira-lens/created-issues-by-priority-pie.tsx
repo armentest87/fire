@@ -3,7 +3,7 @@ import { type JiraIssue } from "@/lib/types";
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, ChartOptions } from 'chart.js';
 import { useIsMobile } from "@/hooks/use-mobile";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -54,7 +54,7 @@ export function CreatedIssuesByPriorityPie({ issues }: { issues: JiraIssue[] }) 
   
   const totalIssues = issues.length;
 
-  const options = {
+  const options: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
     cutout: '70%',
@@ -91,7 +91,7 @@ export function CreatedIssuesByPriorityPie({ issues }: { issues: JiraIssue[] }) 
         <CardDescription>Distribution of all created issues.</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow min-h-[250px] sm:min-h-[300px]">
-         <Doughnut data={chartData} options={options as any} />
+         <Doughnut data={chartData} options={options} />
       </CardContent>
     </Card>
   );

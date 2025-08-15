@@ -1,10 +1,8 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -35,8 +33,13 @@ interface FetchDataDialogProps {
 }
 
 const MultiSelectItem = ({ label, isSelected, onToggle }: { label: string, isSelected: boolean, onToggle: () => void }) => (
-    <CommandItem onSelect={onToggle} className="cursor-pointer" value={label}>
-        <div className="flex items-center gap-2 w-full" onClick={(e) => { e.preventDefault(); onToggle();}}>
+    <CommandItem onSelect={(currentValue) => {
+        // Stop propagation to prevent cmdk from closing the popover
+        event?.preventDefault();
+        event?.stopPropagation();
+        onToggle();
+    }} className="cursor-pointer" value={label}>
+        <div className="flex items-center gap-2 w-full">
             <Checkbox checked={isSelected} />
             <span>{label}</span>
         </div>
@@ -121,7 +124,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
   const selectedProjectName = projects.find(p => p.id === projectId)?.name;
 
   return (
-      <DialogContent className="sm:max-w-[620px]">
+    <>
         <DialogHeader>
           <DialogTitle>Fetch Jira Data</DialogTitle>
           <DialogDescription>
@@ -135,7 +138,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
           </TabsList>
           <TabsContent value="basic">
             <div className="space-y-4 py-4">
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label htmlFor="project-key">Project *</Label>
                     <Popover open={projectPopoverOpen} onOpenChange={setProjectPopoverOpen}>
@@ -152,7 +155,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[270px] p-0">
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                             <Command>
                             <CommandInput placeholder="Search project..." />
                             <CommandList>
@@ -190,7 +193,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
                               {selectedIssueTypes.size > 0 ? `${selectedIssueTypes.size} selected` : "Select issue types..."}
                            </Button>
                         </PopoverTrigger>
-                         <PopoverContent className="w-[270px] p-0" align="start">
+                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                             <Command>
                                 <CommandInput placeholder="Filter types..." />
                                 <CommandList>
@@ -221,7 +224,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
                           {selectedStatuses.size > 0 ? `${selectedStatuses.size} selected` : "Select statuses..."}
                        </Button>
                     </PopoverTrigger>
-                     <PopoverContent className="w-[560px] p-0" align="start">
+                     <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                         <Command>
                             <CommandInput placeholder="Filter statuses..." />
                             <CommandList>
@@ -243,7 +246,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
                      </PopoverContent>
                   </Popover>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label>Created After (optional)</Label>
                     <div className="flex gap-2">
@@ -271,7 +274,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
                       </Popover>
                        {createdDate && <Button variant="ghost" size="icon" onClick={() => setCreatedDate(undefined)}><X className="h-4 w-4"/></Button>}
                     </div>
-                    <div className="flex gap-1 pt-1">
+                    <div className="flex gap-1 pt-1 flex-wrap">
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ weeks: 1 }, setCreatedDate)}>1w</Button>
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 1 }, setCreatedDate)}>1m</Button>
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 3 }, setCreatedDate)}>3m</Button>
@@ -307,7 +310,7 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
                       </Popover>
                        {updatedDate && <Button variant="ghost" size="icon" onClick={() => setUpdatedDate(undefined)}><X className="h-4 w-4"/></Button>}
                     </div>
-                    <div className="flex gap-1 pt-1">
+                    <div className="flex gap-1 pt-1 flex-wrap">
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ weeks: 1 }, setUpdatedDate)}>1w</Button>
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 1 }, setUpdatedDate)}>1m</Button>
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDateRange({ months: 3 }, setUpdatedDate)}>3m</Button>
@@ -347,6 +350,6 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
             </Button>
           </DialogClose>
         </DialogFooter>
-      </DialogContent>
+      </>
   );
 }

@@ -1,19 +1,17 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { type JiraIssue, type JiraCredentials, type JiraProject, type JiraIssueType, type JiraStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Loader2, Menu } from 'lucide-react';
+import { LogOut, Loader2, Menu, Filter as FilterIcon } from 'lucide-react';
 import { fetchJiraData, fetchJiraProjects, fetchJiraIssueTypes, fetchJiraStatuses } from '@/app/actions';
 import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { Dialog, DialogTrigger } from '../ui/dialog';
-
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 
 interface DashboardPageProps {
   credentials: JiraCredentials;
@@ -35,13 +33,12 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
   const [projects, setProjects] = useState<JiraProject[]>([]);
   const [issueTypes, setIssueTypes] = useState<JiraIssueType[]>([]);
   const [statuses, setStatuses] = useState<JiraStatus[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -141,16 +138,16 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             </SheetContent>
         </Sheet>
       ) : (
-         <DashboardTabs activeTab={activeTab} setActiveTab={onTabSelect} />
+         <div className="hidden md:flex">
+            <DashboardTabs activeTab={activeTab} setActiveTab={onTabSelect} />
+         </div>
       )}
 
       <div className="flex flex-col flex-1">
         <header className="flex items-center justify-between gap-4 py-3 px-4 md:px-6 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
           <div className='flex items-center gap-2'>
             {isMobile && (
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon"><Menu className="h-6 w-6"/></Button>
-                </SheetTrigger>
+                <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}><Menu className="h-6 w-6"/></Button>
             )}
             <div>
                 <h1 className="text-xl md:text-2xl font-bold text-primary">
@@ -183,19 +180,26 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
                       <span className='hidden md:inline'>Fetching...</span>
                     </>
                   ) : (
-                     <span className='hidden md:inline'>Fetch Data</span>
+                     <>
+                      <span className='hidden md:inline'>Fetch Data</span>
+                      <span className='inline md:hidden'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                      </span>
+                     </>
                   )}
                   <span className="sr-only">Fetch Data</span>
                 </Button>
               </DialogTrigger>
-              <FetchDataDialog
-                onFetch={handleFetch}
-                isFetching={isFetchingIssues}
-                projects={projects}
-                issueTypes={issueTypes}
-                statuses={statuses}
-                onProjectChange={handleProjectMetaFetch}
-              />
+              <DialogContent>
+                <FetchDataDialog
+                  onFetch={handleFetch}
+                  isFetching={isFetchingIssues}
+                  projects={projects}
+                  issueTypes={issueTypes}
+                  statuses={statuses}
+                  onProjectChange={handleProjectMetaFetch}
+                />
+              </DialogContent>
             </Dialog>
 
             <Button variant="ghost" size="icon" onClick={onLogout}>
@@ -209,7 +213,7 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
             <div className="p-4 sm:p-6 rounded-lg shadow-sm bg-background">
               {!allIssues && !isDataLoading && <WelcomePlaceholder />}
               {isDataLoading && (
-                  <div className="flex items-center justify-center h-full">
+                  <div className="flex items-center justify-center h-full min-h-[50vh]">
                       <div className="text-center">
                         <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
                         <p className="text-lg text-muted-foreground mt-4">

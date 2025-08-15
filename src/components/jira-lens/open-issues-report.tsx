@@ -66,48 +66,50 @@ export function OpenIssuesReport({ issues }: OpenIssuesReportProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-96 w-full">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Key</TableHead>
-                        <TableHead>Summary</TableHead>
-                        <TableHead>Assignee</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Time Spent (h)</TableHead>
-                        <TableHead>Priority</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                   {openIssues.map(issue => (
-                     <TableRow key={issue.key}>
-                        <TableCell className="font-medium">{issue.key}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{issue.summary}</TableCell>
-                        <TableCell>{issue.assignee?.displayName || 'Unassigned'}</TableCell>
-                        <TableCell>
-                            <Badge variant="outline" className={`${getStatusColor(issue.status?.name || '')} font-medium`}>
-                                {issue.status?.name || 'No Status'}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{issue.time_spent_hours ? issue.time_spent_hours.toFixed(1) : 'N/A'}</TableCell>
-                        <TableCell>
-                            <div className="flex items-center gap-2">
-                                {PRIORITY_ICON[issue.priority?.name || '']}
-                                <span>{issue.priority?.name || 'No Priority'}</span>
-                            </div>
-                        </TableCell>
-                     </TableRow>
-                   ))}
-                   {openIssues.length === 0 && (
-                       <TableRow>
-                           <TableCell colSpan={6} className="text-center h-24">
-                               No open issues found.
-                           </TableCell>
-                       </TableRow>
-                   )}
-                </TableBody>
-            </Table>
-        </ScrollArea>
+        <div className="w-full overflow-x-auto">
+            <ScrollArea className="h-96 w-full">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Key</TableHead>
+                            <TableHead>Summary</TableHead>
+                            <TableHead>Assignee</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Time Spent (h)</TableHead>
+                            <TableHead>Priority</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {openIssues.map(issue => (
+                        <TableRow key={issue.key}>
+                            <TableCell className="font-medium">{issue.key}</TableCell>
+                            <TableCell className="max-w-[200px] truncate">{issue.summary}</TableCell>
+                            <TableCell>{issue.assignee?.displayName || 'Unassigned'}</TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className={`${getStatusColor(issue.status?.name || '')} font-medium`}>
+                                    {issue.status?.name || 'No Status'}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">{issue.time_spent_hours ? issue.time_spent_hours.toFixed(1) : 'N/A'}</TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-2">
+                                    {PRIORITY_ICON[issue.priority?.name || '']}
+                                    <span>{issue.priority?.name || 'No Priority'}</span>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                    {openIssues.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={6} className="text-center h-24">
+                                No open issues found.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                    </TableBody>
+                </Table>
+            </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );

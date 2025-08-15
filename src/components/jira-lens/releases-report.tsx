@@ -1,4 +1,3 @@
-
 'use client';
 import { type JiraIssue, type JiraProject } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -169,7 +168,7 @@ const DetailedReleaseTable = ({ issues }: { issues: JiraIssue[] }) => {
                 <CardDescription>Granular details for each version and issue.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="border rounded-md overflow-auto h-96">
+                <div className="border rounded-md overflow-x-auto h-96">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -273,14 +272,14 @@ export function ReleasesReport({ issues, projects }: { issues: JiraIssue[], proj
                  <h2 className="text-xl font-bold">Releases Report</h2>
                 <div className="flex flex-wrap gap-4">
                      <Select value={selectedProject} onValueChange={setSelectedProject}>
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Select Projects" /></SelectTrigger>
+                        <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Select Projects" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Projects</SelectItem>
                              {availableProjects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                         </SelectContent>
                     </Select>
                      <Select value={selectedVersion} onValueChange={setSelectedVersion} disabled={uniqueFixVersions.length === 0}>
-                        <SelectTrigger className="w-48"><SelectValue placeholder="Select Version" /></SelectTrigger>
+                        <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Select Version" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all-versions">All Versions</SelectItem>
                             {uniqueFixVersions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
