@@ -123,113 +123,102 @@ const FilterContent = ({ onFilterChange, allIssues, assignees, statuses, issueTy
     );
 
     return (
-         <div className="grid gap-4">
-            <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                     <h4 className="font-medium leading-none sr-only">Filters</h4>
-                     <p className="text-sm text-muted-foreground sr-only">
-                        Refine the issues shown on the dashboard.
-                     </p>
-                </div>
+         <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-4 border-b">
+                <h4 className="font-medium leading-none">Filters</h4>
                 {activeFilterCount > 0 && (
                     <Button variant="ghost" size="sm" onClick={handleClear}><X className="mr-2 h-4 w-4"/>Clear ({activeFilterCount})</Button>
                 )}
             </div>
-            <div className="grid gap-4 p-1">
-                <div className="space-y-2">
-                    <Label>Created After</Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !filters.date && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {filters.date ? format(filters.date, "PPP") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                                mode="single"
-                                selected={filters.date}
-                                onSelect={(d) => setFilters(f => ({...f, date: d}))}
-                                initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                </div>
+            <ScrollArea className="flex-grow">
+                <div className="grid gap-4 p-4">
                     <div className="space-y-2">
-                    <Label htmlFor="issue-key">Issue Key</Label>
-                    <Input id="issue-key" placeholder="PROJ-123" value={filters.issueKey} onChange={e => setFilters(f => ({...f, issueKey: e.target.value}))}/>
-                </div>
-                <div className="space-y-2">
-                    <Label>Assignee</Label>
-                    <Command>
-                        <CommandInput placeholder="Filter assignees..." />
-                        <CommandList>
-                            <CommandEmpty>No results found.</CommandEmpty>
-                            <ScrollArea className="h-48">
+                        <Label>Created After</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !filters.date && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {filters.date ? format(filters.date, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                    mode="single"
+                                    selected={filters.date}
+                                    onSelect={(d) => setFilters(f => ({...f, date: d}))}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                        <div className="space-y-2">
+                        <Label htmlFor="issue-key">Issue Key</Label>
+                        <Input id="issue-key" placeholder="PROJ-123" value={filters.issueKey} onChange={e => setFilters(f => ({...f, issueKey: e.target.value}))}/>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Assignee</Label>
+                        <Command>
+                            <CommandInput placeholder="Filter assignees..." />
+                            <CommandList>
+                                <CommandEmpty>No results found.</CommandEmpty>
                                 <CommandGroup>
                                     {assignees.map(assignee => (
                                         <MultiSelectItem key={assignee} value={assignee} set={filters.assignees} onToggle={(item) => setFilters(f => ({...f, assignees: toggleSetItem(f.assignees, item)}))} />
                                     ))}
                                 </CommandGroup>
-                            </ScrollArea>
-                        </CommandList>
-                    </Command>
-                </div>
-                <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Command>
-                        <CommandInput placeholder="Filter statuses..." />
-                        <CommandList>
-                            <CommandEmpty>No results found.</CommandEmpty>
-                            <ScrollArea className="h-48">
-                            <CommandGroup>
-                                {statuses.map(status => (
-                                    <MultiSelectItem key={status} value={status} set={filters.statuses} onToggle={(item) => setFilters(f => ({...f, statuses: toggleSetItem(f.statuses, item)}))} />
-                                ))}
-                            </CommandGroup>
-                            </ScrollArea>
-                        </CommandList>
-                    </Command>
-                </div>
-                <div className="space-y-2">
-                    <Label>Issue Type</Label>
-                    <Command>
-                        <CommandInput placeholder="Filter issue types..." />
-                        <CommandList>
-                            <CommandEmpty>No results found.</CommandEmpty>
-                            <ScrollArea className="h-48">
-                            <CommandGroup>
-                                {issueTypes.map(it => (
-                                    <MultiSelectItem key={it} value={it} set={filters.issueTypes} onToggle={(item) => setFilters(f => ({...f, issueTypes: toggleSetItem(f.issueTypes, item)}))} />
-                                ))}
-                            </CommandGroup>
-                            </ScrollArea>
-                        </CommandList>
-                    </Command>
-                </div>
-                <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Command>
-                        <CommandInput placeholder="Filter priorities..." />
-                        <CommandList>
-                            <CommandEmpty>No results found.</CommandEmpty>
-                             <ScrollArea className="h-48">
+                            </CommandList>
+                        </Command>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Status</Label>
+                        <Command>
+                            <CommandInput placeholder="Filter statuses..." />
+                            <CommandList>
+                                <CommandEmpty>No results found.</CommandEmpty>
+                                <CommandGroup>
+                                    {statuses.map(status => (
+                                        <MultiSelectItem key={status} value={status} set={filters.statuses} onToggle={(item) => setFilters(f => ({...f, statuses: toggleSetItem(f.statuses, item)}))} />
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Issue Type</Label>
+                        <Command>
+                            <CommandInput placeholder="Filter issue types..." />
+                            <CommandList>
+                                <CommandEmpty>No results found.</CommandEmpty>
+                                <CommandGroup>
+                                    {issueTypes.map(it => (
+                                        <MultiSelectItem key={it} value={it} set={filters.issueTypes} onToggle={(item) => setFilters(f => ({...f, issueTypes: toggleSetItem(f.issueTypes, item)}))} />
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Priority</Label>
+                        <Command>
+                            <CommandInput placeholder="Filter priorities..." />
+                            <CommandList>
+                                <CommandEmpty>No results found.</CommandEmpty>
                                 <CommandGroup>
                                     {priorities.map(p => (
                                         <MultiSelectItem key={p} value={p} set={filters.priorities} onToggle={(item) => setFilters(f => ({...f, priorities: toggleSetItem(f.priorities, item)}))} />
                                     ))}
                                 </CommandGroup>
-                            </ScrollArea>
-                        </CommandList>
-                    </Command>
+                            </CommandList>
+                        </Command>
+                    </div>
                 </div>
-            </div>
+            </ScrollArea>
         </div>
     );
 };
@@ -252,22 +241,8 @@ export function JiraFilterPopover(props: JiraFilterPopoverProps) {
                     <span className="sr-only">Open Filters</span>
                 </Button>
             </PopoverOrDialogTrigger>
-            <PopoverOrDialogContent className={cn(isMobile ? "max-h-[80vh]" : "w-80", "p-0")} align="end">
-                 {isMobile ? (
-                    <>
-                        <DialogHeader className='p-4 pb-0'>
-                            <DialogTitle>Filters</DialogTitle>
-                            <DialogDescription>Refine the issues shown on the dashboard.</DialogDescription>
-                        </DialogHeader>
-                        <ScrollArea className="p-4">
-                           <FilterContent {...props} />
-                        </ScrollArea>
-                    </>
-                 ) : (
-                    <div className='p-4'>
-                        <FilterContent {...props} />
-                    </div>
-                 )}
+            <PopoverOrDialogContent className="p-0 w-80 max-h-[70vh] flex flex-col" align="end">
+                 <FilterContent {...props} />
             </PopoverOrDialogContent>
         </PopoverOrDialog>
     );
