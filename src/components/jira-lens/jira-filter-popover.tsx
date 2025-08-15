@@ -126,8 +126,8 @@ const FilterContent = ({ onFilterChange, allIssues, assignees, statuses, issueTy
          <div className="grid gap-4">
             <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                     <h4 className="font-medium leading-none">Filters</h4>
-                     <p className="text-sm text-muted-foreground">
+                     <h4 className="font-medium leading-none sr-only">Filters</h4>
+                     <p className="text-sm text-muted-foreground sr-only">
                         Refine the issues shown on the dashboard.
                      </p>
                 </div>
@@ -252,16 +252,16 @@ export function JiraFilterPopover(props: JiraFilterPopoverProps) {
                     <span className="sr-only">Open Filters</span>
                 </Button>
             </PopoverOrDialogTrigger>
-            <PopoverOrDialogContent className={cn(isMobile ? "w-full" : "w-80", "p-0")} align="end">
+            <PopoverOrDialogContent className={cn(isMobile ? "max-h-[80vh]" : "w-80", "p-0")} align="end">
                  {isMobile ? (
                     <>
                         <DialogHeader className='p-4 pb-0'>
                             <DialogTitle>Filters</DialogTitle>
                             <DialogDescription>Refine the issues shown on the dashboard.</DialogDescription>
                         </DialogHeader>
-                        <div className='p-4'>
-                            <FilterContent {...props} />
-                        </div>
+                        <ScrollArea className="p-4">
+                           <FilterContent {...props} />
+                        </ScrollArea>
                     </>
                  ) : (
                     <div className='p-4'>

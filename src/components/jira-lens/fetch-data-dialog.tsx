@@ -123,7 +123,8 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
 
   return (
     <>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'basic' | 'jql')} className="w-full pt-4">
+      <ScrollArea className="max-h-[70vh]">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'basic' | 'jql')} className="w-full pt-4 px-1">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="basic">Basic Filters</TabsTrigger>
             <TabsTrigger value="jql">JQL</TabsTrigger>
@@ -329,19 +330,20 @@ export function FetchDataDialog({ onFetch, isFetching, projects, issueTypes, sta
             </div>
           </TabsContent>
         </Tabs>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" disabled={isFetching}>
-              Cancel
-            </Button>
-          </DialogClose>
-          <DialogClose asChild>
-            <Button onClick={handleFetchClick} disabled={isFetching || (activeTab === 'basic' && isBasicFetchDisabled) || (activeTab === 'jql' && !jql)}>
-              {isFetching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Fetch Issues
-            </Button>
-          </DialogClose>
-        </DialogFooter>
-      </>
+      </ScrollArea>
+      <DialogFooter className="mt-4">
+        <DialogClose asChild>
+          <Button variant="outline" disabled={isFetching}>
+            Cancel
+          </Button>
+        </DialogClose>
+        <DialogClose asChild>
+          <Button onClick={handleFetchClick} disabled={isFetching || (activeTab === 'basic' && isBasicFetchDisabled) || (activeTab === 'jql' && !jql)}>
+            {isFetching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Fetch Issues
+          </Button>
+        </DialogClose>
+      </DialogFooter>
+    </>
   );
 }

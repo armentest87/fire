@@ -11,7 +11,7 @@ import { DashboardTabs } from './dashboard-tabs';
 import { JiraFilterPopover } from './jira-filter-popover';
 import { FetchDataDialog } from './fetch-data-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 
 interface DashboardPageProps {
@@ -135,6 +135,9 @@ export function DashboardPage({ credentials, onLogout }: DashboardPageProps) {
       {isMobile ? (
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
             <SheetContent side="left" className="p-0 w-64">
+                <SheetHeader>
+                    <SheetTitle className="sr-only">Main Navigation</SheetTitle>
+                </SheetHeader>
                  <DashboardTabs activeTab={activeTab} setActiveTab={onTabSelect} />
             </SheetContent>
         </Sheet>
